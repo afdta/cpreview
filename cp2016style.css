@@ -1,0 +1,67 @@
+#cp2016 p, #cp2016 a, #cp2016 li{
+	font-family: arial, helvetica, sans;
+	font-size:15px;
+	color:#333333
+}
+
+#cp2016 text{
+	font-family: arial, helvetica, sans;
+	fill:#333333;
+	font-size:15px;
+}
+
+#cp2016 .disable-select{
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+#cp2016 .c-fix:after{
+  content:"";
+  clear:both;
+  display:table;
+}
+
+#cp2016 .cp2016-view{
+	position:relative;
+	z-index:10;
+	left:0%;
+	top:0%;
+	opacity:1;
+	visibility:visible;
+	height:600px;
+	height:100vh;
+}
+
+#cp2016 .cp2016-view.out-of-view{
+	position:absolute;
+	left:-101%;
+	top:0%;
+	opacity:0;
+	visibility:hidden;
+}
+
+#cp2016 .as-table{
+	display:table;
+	border-collapse: collapse;
+	table-layout: fixed;
+}
+#cp2016 .as-row{
+	display:table-row;
+}
+#cp2016 .as-cell{
+	display:table-cell;
+	padding:5px 3px 2px 3px;
+}
+
+#cp2016 #tractmap-legend{
+	position:absolute;
+	right:20px;
+	top:50px;
+	width:40px;
+	height:300px;
+	pointer-events:none;
+}

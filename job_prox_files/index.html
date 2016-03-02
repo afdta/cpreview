@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<link rel="stylesheet" type="text/css" href="jobProximity2015.css">
+
+<body>
+
+<script src="d3min.js"></script>
+<script src="topojson.js"></script>
+
+<div id="JP15Wrap" style="width:950px;position:relative;margin:auto;">
+
+  <!--METRO AREA DETAILED MAP-->
+  <p style="font-size:24px;font-weight:bold;margin:55px 5px 0px 15px;">Neighborhood trends in the number of nearby jobs</p>
+  <p style="font-size:16px;margin:0.5em 5px 15px 15px;font-style:italic;" class="airy">For each census tract, find the number of jobs located nearby (i.e. within a typical commute distance for the metro area). Use the "Map options" menu to select which year of data to view, and to identify high-poverty or majority-minority neighborhoods.</p>
+  <div id="mapWrapOuter" style="border:1px solid #ebebeb;width:948px;position:relative;z-index:1">
+
+    <div id="mapTitleBox" style="z-index:105;width:948px;position:relative;padding:10px 0px 0px 0px;height:auto;border-bottom:1px solid #ebebeb">
+      <p style="font-size:20px;margin:0px 0px 0px 20px;font-weight:bold;float:left;width:655px;line-height:32px">
+        <span id="metroAreaName">...</span>
+      </p>
+
+      <input type="text" placeholder="Search for a metropolitan area to map" id="JP15TablePull" style="background-color:#ffffff;border-radius:10px;border:1px solid #dddddd;height:20px;float:right;padding:5px 10px 5px 10px;margin:0px 15px 0px 5px;min-width:230px;position:relative;z-index:105;font-family:arial;"/>
+
+      <div style="width:948px;height:10px;position:relative;clear:both;"></div>
+
+
+      <div id="JP15Select" style="z-index:106;position:absolute;width:948px;height:0px;top:100%;background-color:#ffffff;overflow:hidden;border:0px solid #ebebeb;">
+       <!--<p id="JP15TablePull" style="z-index:10;position:absolute;left:12px;top:5px;font-size:12px;color:#555555;cursor:pointer">VIEW DATA TABLE TO SELECT A METRO AREA</p>-->
+        <div id="JP15HeaderTableWrap" style="margin:15px 5px 0px 8px;padding:0px;border:0px;border-bottom:0px solid #ebebeb">
+          <table id="JP15HeaderTable" class="GMMTBL">
+            <tbody></tbody>
+          </table>
+        </div>
+        <div id="JP15TableWrap" style="margin:0px 5px 5px 8px;overflow-y:scroll;padding:0px;border:0px;border-bottom:1px solid #ebebeb;padding-bottom:10px;">
+          <table id="JP15Table" class="GMMTBL">
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+    <div id="mapWrap" style="position:relative;z-index:50;overflow:visible;margin:0px 0px 0px 0px;">
+      <svg id="mapSVG" style="position:absolute;top:0px;left:0px;z-index:50;pointer-events:auto;">
+        <defs>
+          <filter id="toBW">
+            <feColorMatrix type="saturate" values="0"></feColorMatrix>
+          </filter>
+        </defs>
+      </svg>
+      
+      <!--legend-->
+      <div style="position:absolute;top:0px;left:0px;width:600px;z-index:109;pointer-events:none;">
+        <p id="indicatorName" style="font-size:16px;float:left;padding:5px 10px 5px 10px;margin:16px 10px 10px 10px;font-weight:bold;position:relative;z-index:100;background:rgba(255,255,255,0.5);border-radius:0px;"></p> 
+
+        <div id="tractLegend" style="position:relative;clear:both;height:290px;width:145px;">
+          <svg style="height:100%;width:100%;">
+            <rect x="10" y="0" height="290" width="125" rx="0" ry="0" fill="#ffffff" fill-opacity="0.5"></rect>
+            <g id="primaryCityMarker" transform="translate(20,200)">
+              <line x1="0" x2="100" y1="4" y2="4" stroke-width="2px" stroke="#333333"></line>
+              <text y="20" x="0" style="font-size:13px;">Primary city/cities</text>
+            </g>
+          </svg>
+        </div>
+      </div>
+
+      <!--map options button-->
+      <div style="position:absolute;right:17px;top:14px;cursor:pointer;width:140px;height:31px;z-index:102;border:0px solid #ebebeb;border-radius:0px;background-color:rgba(255,255,255,0.5);" id="mapOptionsButton">
+        <svg style="width:100%;height:100%;">
+          <!--<path d="M0,0 l180,0 a20,20 0 0,0 -20,20 l0,7 a10,10 0 0,1 -10,10 l-150,0 z" stroke="none" stroke-width="1px" fill="#ffffff" shape-rendering="geometricPrecision"></path>-->
+          <!--<rect x="35" y="0" width="155" height="30" fill="#ffffff" rx="5" ry="5"></rect>-->
+          <text x="94" y="21" class="noselectp" text-anchor="end" style="font-weight:bold;">Map options</text>
+          <g transform="translate(106,1)">
+            <line x1="0" x2="20" y1="8" y2="8" stroke="#000000" stroke-width="3px" shape-rendering="crispEdges" stroke-linecap="square"></line>
+            <line x1="0" x2="20" y1="14" y2="14" stroke="#000000" stroke-width="3px" shape-rendering="crispEdges" stroke-linecap="square"></line>
+            <line x1="0" x2="20" y1="20" y2="20" stroke="#000000" stroke-width="3px" shape-rendering="crispEdges" stroke-linecap="square"></line>
+          </g>
+        </svg>
+      </div>
+
+      <!--menu options-->
+      <div id="menu" class="noselectp" style="position:absolute;top:0px;width:290px;right:2px;padding:15px 15px 5px 15px;height:auto;background-color:rgba(255,255,255,1);border:1px solid #ebebeb;border-radius:0px 0px 0px 10px;border-width:0px 0px 1px 1px;z-index:103">
+
+        <div style="width:100%;height:auto;font-size:16px;position:relative">
+          <p style="font-weight:bold;padding:5px 0px 5px 0px;">Map options</p>
+          <svg style="width:30px;height:20px;position:absolute;right:8px;top:1px;cursor:pointer;border:1px solid #dddddd;border-radius:5px;pointer-events:all;" id="mapOptionsClose">
+              <!--<text x="0" y="23" text-anchor="start" style="font-weight:bold">Map Options</text>-->
+              <!--<rect x="0" y="0" width="31" height="21" rx="0" ry="0" fill="#ffffff" stroke="#dddddd" stroke-width="1px" shape-rendering="crispEdges"></rect>-->
+              <!--<text x="15" y="18" text-anchor="middle" style="font-size:16px;font-weight:bold;">X</text>-->
+              <!--<path d="m 18,16 4,0 -5,-6 5,-6 -4,0 -3,4 -3,-4 -4,0 5,6 -5,6 4,0 3,-4 z" fill="#000000" stroke="none"></path>-->
+              <!--<text x="55" y="20" text-anchor="end" style="font-size:11px;">[CLOSE]</text>-->
+              <line x1="10" x2="20" y1="5" y2="15" stroke-width="3px" stroke="#000000" stroke-linecap="butt" shape-rendering="crispEdges"></line>
+              <line x1="10" x2="20" y1="15" y2="5" stroke-width="3px" stroke="#000000" stroke-linecap="butt" shape-rendering="crispEdges"></line>
+          </svg>
+        </div>        
+
+        <div class="menuGroup" id="indicatorGroup">
+          <div class="menuDirection"><p>Select an indicator to map</p></div>
+          <table style="width:100%">
+            <tbody>
+            </tbody>
+          </table>
+        </div> 
+          
+        <div class="menuGroup" id="filterGroup">
+          <div class="menuDirection"><p>Select a filter to only show tracts where</p></div>
+            <div style="width:100%;cursor:pointer;margin-top:15px;" id="minorityFilter">
+              <div style="width:12px;height:12px;border:1px solid #999999;float:left">
+                <div class="buttonFill" style="width:10px;height:10px;margin:1px"></div>
+              </div>
+              <p style="float:left;font-size:13px;margin-left:5px;">The population is majority-minority</p>
+              <div style="width:0px;height:0px;position:relative;clear:both;"></div>
+            </div>
+
+            <div style="width:100%;cursor:pointer;margin-top:15px;" id="povertyFilter">
+              <div style="width:12px;height:12px;border:1px solid #999999;float:left">
+                <div class="buttonFill" style="width:10px;height:10px;margin:1px"></div>
+              </div>
+              <p style="float:left;font-size:13px;margin-left:5px;">The poverty rate is 20 percent or higher</p>
+              <div style="width:0px;height:0px;position:relative;clear:both;"></div>
+            </div>
+        </div>
+
+        <div class="menuGroup">
+          <div class="menuDirection"><p>Other options</p></div>
+          <div style="width:100%;cursor:pointer;margin-top:15px;" id="showCounties" class="noselectp">
+            <div style="width:12px;height:12px;border:1px solid #999999;float:left">
+              <div class="buttonFill" style="width:10px;height:10px;margin:1px"></div>
+            </div>
+            <p style="float:left;font-size:13px;margin-left:5px;">Show county boundaries</p>
+            
+            <div style="width:0px;height:0px;position:relative;clear:both;"></div>
+          </div>
+        </div>
+
+      </div>
+
+      <div id="tooltip" style="width:305px;padding:0px;height:auto;min-height:220px;display:none;pointer-events:none;background:#ffffff;position:relative;z-index:110;border:1px solid rgb(5,55,105)">
+        <div style="padding:15px 15px 3px 15px;;background-color:rgb(5,55,105);margin-bottom:10px">
+          <p id="tooltip_title" style="font-size:16px;margin:0px;font-weight:bold;color:#ffffff;float:left;line-height:35px;height:35px;">...</p>
+          <p id="tooltip_title2" style="font-size:11px;color:#ffffff;margin:0px;float:right;text-align:right;line-height:auto;height:35px;">...</p>
+          <div style="position:relative;clear:both;width:0px;height:0px;"></div>
+        </div>
+
+        <div style="padding: 0px 15px 0px 15px">
+          <p style="margin:15px 0px 10px 0px;line-height:20px;padding:0px 0px 2px 0px;border-bottom:1px solid #ebebeb">Number of jobs within <span id="milesDistance">...</span> miles</p>
+          <table id="ttip_table0">
+            <tbody>
+            </tbody>
+          </table>
+
+          <p style="margin:15px 0px 10px 0px;line-height:20px;padding:0px 0px 2px 0px;border-bottom:1px solid #ebebeb">Neighborhood overview</p>
+          <table id="ttip_table1">
+            <tbody>
+            </tbody>
+          </table>
+          <p style="font-size:13px;margin-bottom:15px;margin-top:8px;" id="tractOverview"></p>
+        </div>
+      </div>
+
+
+      <div id="zoomCtrlWrap">
+        <div id="zoomCtrl" class="noselectp">
+          <div id="zoomCtrlIn">
+            <svg>
+              <path d="M16,9 l0,12"></path>
+              <path d="M10,15 l12,0"></path>
+            </svg>
+          </div>
+          <div id="zoomCtrlOut" class="noMoreZoom">
+            <svg>
+              <path d="M10,15 l12,0"></path>
+            </svg>
+          </div>
+        </div>
+    </div>
+
+
+    <!--link to more information-->
+    <div style="position:absolute;right:15px;bottom:20px;width:auto;height:auto;z-index:102;background-color:rgba(255,255,255,0.5);padding:7px;">
+      <p style="text-align:right"><a style="font-family:arial;font-size:14px;text-decoration:none;color:#000000;" href="#notesBoxHeader">More information »</a></p>
+    </div>    
+    
+    </div>
+
+    <div style="min-height:200px;width:908px;margin:0px;padding:15px 20px 10px 20px;border-top:1px solid #ebebeb;">
+      <p style="font-style:italic;margin-bottom:1em;">How do the neighborhoods in the map above compare to the metro area average?</p>
+      <p style="font-weight:normal;">Number of jobs near the average resident of the <span id="metroAreaName2"></span> metro area</p>
+      <table class="summaryTable" style="margin:10px 0px 15px 0px;">
+        <thead>
+          <tr>
+            <td style="width:18%"></td>
+            <td colspan="3">Entire metro area</td>
+            <td colspan="3">City portion of the metro area</td>
+            <td colspan="3">Suburban portion of the metro area</td>
+          </tr>
+          <tr class="italicRow">
+            <td style="width:18%">Neighborhood type</td>
+            <td>2000</td>
+            <td>2012</td>
+            <td>Change (%)</td>
+            <td>2000</td>
+            <td>2012</td>
+            <td>Change (%)</td>
+            <td>2000</td>
+            <td>2012</td>
+            <td>Change (%)</td>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Data loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+
+</div> <!--end mapwrapouter-->
+
+<!--Aggregate data chart-->
+  <p style="font-size:24px;font-weight:bold;margin:55px 5px 15px 15px;">Trends in the number of nearby jobs, 96 large metro areas</p>
+  <p style="font-size:16px;margin:0.5em 5px 15px 15px;font-style:italic;" class="airy">For each metropolitan area, see how the number of jobs near the average resident compares with other large metro areas and the nation as a whole. Hover over each bar for detailed information.</p>
+  <div style="width:948px;border:1px solid #ebebeb;height:auto;margin:15px 0px 15px 0px;overflow:hidden;">
+    <div style="height:910px;width:562px;padding-right:17px;float:left;position:relative;z-index:1">
+      <div style="min-height:50px;padding:20px 0px 0px 15px;position:relative;border-bottom:0px solid #ebebeb;">
+        <p id="barChartTitle" style="font-weight:bold;padding-bottom:6px;position:absolute;top:15px;">...</p>
+      </div>
+      <div style="height:820px;width:547px;margin:0px 0px 0px 15px;overflow:visible">
+        <svg id="barChart" style="width:1000px;height:100%">
+          <rect x="0" y="13" height="700" width="550" fill="none"></rect>
+          <g transform="translate(0,20)" id="plotArea"></g>
+          <g id="barChartGrid"></g>
+          <g transform="translate(0,20)" id="barChartAnno" style="visibility:hidden;"></g>
+          <g id="barChartTip" style="visibility:hidden;pointer-events:none;">
+            <rect x="0" y="27" height="40" width="916" fill-opacity="0.8" fill="#ffffff"></rect>
+            <text x="5" y="43"> </text>
+          </g>
+        </svg>
+      </div>
+    </div>
+    
+    <div style="height:910px;width:323px;padding:0px 17px 0px 17px;float:right;opacity:0;visibility:hidden;pointer-events:none;position:relative;z-index:2;background-color:rgba(255,255,255,0.75);border-left:1px solid #ebebeb" id="chartOptions">
+      <div style="min-height:40px;padding:20px 0px 0px 0px;position:relative;margin-bottom:5px;border-bottom:0px solid #ebebeb">
+        <p style="font-weight:bold;padding-bottom:6px;position:absolute;top:15px;">Plot options</p>
+      </div>
+
+
+
+      <p style="margin-top:0px;border-bottom:1px solid #ebebeb;font-weight:normal;padding-bottom:6px;">Select the metro area portion to focus on</p>
+      <div style="float:left;cursor:pointer;margin:10px 20px 0px 0px;" id="metroRadio" class="JPRadio buttonSelected">
+        <div style="width:12px;height:12px;border:1px solid #999999;float:left">
+          <div class="buttonFill" style="width:10px;height:10px;margin:1px"></div>
+        </div>
+        <p style="float:left;font-size:13px;margin-left:5px;">Entire metro area</p>
+        <div style="width:0px;height:0px;position:relative;clear:both;"></div>
+      </div>
+
+      <div style="float:left;cursor:pointer;margin:10px 20px 0px 0px;" id="cityRadio" class="JPRadio">
+        <div style="width:12px;height:12px;border:1px solid #999999;float:left">
+          <div class="buttonFill" style="width:10px;height:10px;margin:1px"></div>
+        </div>
+        <p style="float:left;font-size:13px;margin-left:5px;">City</p>
+        <div style="width:0px;height:0px;position:relative;clear:both;"></div>
+      </div>
+
+      <div style="float:left;cursor:pointer;margin:10px 20px 0px 0px;" id="suburbsRadio" class="JPRadio">
+        <div style="width:12px;height:12px;border:1px solid #999999;float:left">
+          <div class="buttonFill" style="width:10px;height:10px;margin:1px"></div>
+        </div>
+        <p style="float:left;font-size:13px;margin-left:5px;">Suburbs</p>
+        <div style="width:0px;height:0px;position:relative;clear:both;"></div>
+      </div>
+      <div style="width:0px;height:0px;position:relative;clear:both;"></div>
+
+      <p style="margin-top:45px;border-bottom:1px solid #ebebeb;padding-bottom:6px;font-weight:normal;">Select an indicator to plot</p>
+      <div class="menuGroup" id="metroLevelIndicators" style="margin:0px;">
+        <p style="font-style:italic;font-size:13px;margin-left:10px;margin-top:10px;">2000</p>
+        <table style="margin:0px;" class="compact">
+          <tbody></tbody>
+        </table>
+        <p style="font-style:italic;font-size:13px;margin-left:10px;margin-top:10px;">2012</p>
+        <table style="margin:0px;" class="compact">
+          <tbody></tbody>
+        </table>
+        <p style="font-style:italic;font-size:13px;margin-left:10px;margin-top:10px;">2000–2012</p>
+        <table style="margin:0px;" class="compact">
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <p style="margin-top:25px;border-bottom:1px solid #ebebeb;padding-bottom:6px;font-weight:normal;">Other options</p>
+      <div style="cursor:pointer;margin:10px 20px 50px 0px;" id="labelsRadio">
+        <div style="width:12px;height:12px;border:1px solid #999999;float:left">
+          <div class="buttonFill" style="width:10px;height:10px;margin:1px"></div>
+        </div>
+        <p style="float:left;font-size:13px;margin-left:5px;">Label plot with metro area names</p>
+        <div style="width:0px;height:0px;position:relative;clear:both;"></div>
+      </div>
+
+
+    </div>
+    <div style="width:0px;height:0px;position:relative;clear:both;"></div>
+  </div>
+
+  <p id="notesBoxHeader" style="margin-bottom:5px;margin-top:55px;margin-left:20px;"><b>More information</b></p>
+  <div id="notesBox">
+    <p><b>Geography notes:</b> The fundamental unit of geography used in this analysis is the census tract, which approximates a neighborhood. All tract data have been compiled to conform to 2010 Census tract boundaries. To find a tract based on street address, visit the <a target="_blank" href="http://geocoding.geo.census.gov/geocoder/geographies/address?form">Census Bureau geocoding website</a>.</p>
+
+    <p>Primary cities are defined here as the first named city in the official metropolitan statistical area title, as well as any other city in the metro area title that has a population of 100,000 or more. A census tract is assigned to a primary city if its centroid, or center point, falls within the boundary of the primary city. Otherwise it is assigned to the suburban portion of the metro area for purposes of aggregation.</p>
+
+    <p><b>Defining "nearby" jobs:</b> The number of "nearby" jobs for a given census tract (i.e. neighborhood) represents the number of jobs that are within a typical commute distance from the center point of that tract. Typical commute distances are based on the median commute distance in each metro area. Commute distances are measured between workers' origin and destination tracts "as the crow flies" (i.e. Euclidean distance).</p>
+
+    <p><b>Creating aggregate measures:</b> Tract-level data are aggregated to create statistics for larger geographic areas like metropolitan areas, primary cities, or the nation as a whole. Aggregate figures represent the average number of "nearby" jobs for all tracts in the relevant area, weighted by tract population. Aggregate figures may also be thought of as the average number of jobs near the typical resident.</p>
+
+    <p><b>Sources:</b> Authors' analysis of U.S. Census Bureau data; specifically, the 2000 and 2012 ZIP Business Patterns, the 2011 Longitudinal Employer-Household Dynamics (LEHD), Census 2000 (from the Geolytics Neighborhood Change Database), and the 2009-2013 American Community Survey.</p> 
+
+    <p>Necessary employment data are not available for the state of Massachusetts, so metropolitan areas in that state are excluded from this analysis.</p>
+  </div>
+
+
+</div>
+
+<script src="jobProximity.js"></script>
+
+</body>
+
