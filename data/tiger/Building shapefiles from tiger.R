@@ -91,7 +91,7 @@ for(c in cbsa100$cbsa){
 }
 
 #generate string for shell script
-paste(cbsa100$cbsa,"",sep="",collapse=" ")
+paste(cbsa100$cbsa, "", sep="", collapse=" ")
 
 #################################END (CODE BELOW IS SCRAP)
 
