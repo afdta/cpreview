@@ -1,0 +1,4 @@
+Change color scheme
+Investigate other scale options
+Great Lakes
+Nas in the data, how to encode those
