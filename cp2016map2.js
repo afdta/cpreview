@@ -6,7 +6,6 @@ var path = d3.geo.path().projection(null);
 var tractDB = {};
 var getDrawTracts = function(cbsa, name){
   var uri = CP2016.session.repo + "geojson/" + cbsa + ".json";
-
   var processDat = function(dat){
 
     //resetFilters();
@@ -65,7 +64,7 @@ var getDrawTracts = function(cbsa, name){
     });
   }
 }
-getDrawTracts("38900","Washington-Arlington-Alexandria, DC-VA-MD-WV");
+//getDrawTracts("47900","Washington-Arlington-Alexandria, DC-VA-MD-WV");
 
 //combine draw functions into one that renders to svg and/or canvas
 function drawSVG(gj, fill, meshes){
@@ -73,7 +72,9 @@ function drawSVG(gj, fill, meshes){
   sel.exit().remove();
   sel.enter().append("path").classed("tract",true);
   sel.attr("d",path).attr({"stroke":"none","stroke-width":1}).attr("pointer-events","all").style("visibility","visible");
-
+  sel.attr("data-tract",function(d,i){
+  	return d.id;
+  });
   //sel.on("mouseover",showtip);
   //sel.on("mousemove",showtip);
   //sel.on("touchstart",showtip);
@@ -100,11 +101,10 @@ function drawSVG(gj, fill, meshes){
   //m.attr("stroke-dasharray",function(d,i){return i===0 ? "8,3" : "none"})
 
   shadeTracts(sel,gj);
-  CP2016.dom.tractmap.wrap.classed("out-of-view",false);
 };
 
 
-var rangeFinder = function(n){
+var range = function(n){
   var range = [];
   for(var i=1;i<=n;i++){
     range.push(i);
@@ -153,8 +153,36 @@ function shadeTracts(selection,geojson){
     }
     return val;
   })
-  var min = d3.min(dat);
-  var max = d3.max(dat);
+
+  //filter out nulls
+  var dat2 = [];
+  for(var dd=0; dd<dat.length; dd++){
+  	if(dat[dd] !== null){
+  		dat2.push(dat[dd]);
+  	}
+  }
+
+  var extremeTop = null;
+  var extremeBot = null;
+
+
+  dat2.sort(function(a,b){
+	if(a<b){return -1}
+  	else if(a>b){return 1}
+  	else{return 0}
+  })
+
+  //console.log(dat2.slice(-10));
+
+  var median = d3.quantile(dat2, 0.5);
+
+  var plarge = d3.quantile(dat2, 0.98);
+  var psmall = d3.quantile(dat2, 0.02);
+
+  //console.log("5th: "+psmall+" | median: "+median+" | 95th: "+plarge);
+  
+  var min = psmall;
+  var max = plarge;
   var maxAbs = d3.max([Math.abs(min),Math.abs(max)]);
   var actualMin = min;
 
@@ -171,7 +199,7 @@ function shadeTracts(selection,geojson){
   }*/
 
 //create equal sized +/- sections
-  if(min >= 0){
+  if(actualMin >= 0){
     min = 0;
   }
   else{
@@ -179,13 +207,14 @@ function shadeTracts(selection,geojson){
     max = maxAbs;
   };
 
-  var ncols = 5;
+  var ncols = 4;
   var lcols = actualMin < 0 ? ncols*2 : ncols;
 
-  var qs = CP2016.scales.quantile30.domain([min,max]).range(rangeFinder(ncols));
+  var qs = CP2016.scales.quantile30.domain([min,max]).range(range(ncols));
   var labcol = CP2016.color.lab;
 
-  //labcol will get called with -1, -0.8, -0.6, -0.4, -0.2, 0.2, 0.4, 0.6, 0.8, or 1 -- the fill will never be #ffffff
+  //labcol will get called with -1, -0.8, -0.6, -0.4, -0.2, 0.2, 0.4, 0.6, 0.8, or 1 -- never 0 (which maps to #ffffff)
+  //values above plarge will be assigned the top category and values below psmall will be assigned the bottom category by qs
   selection.attr("fill",function(d,i){
     try{
       var v = MAP(d);
@@ -261,5 +290,8 @@ function shadeTracts(selection,geojson){
 };
 
 
+	CP2016.dom.table.fill(CP2016.dom.table.data, getDrawTracts);
+	CP2016.dom.table.resize();
+	CP2016.dom.show("table");
 
 })(); //end closure

@@ -48,6 +48,7 @@
 	display:table;
 	border-collapse: collapse;
 	table-layout: fixed;
+	width:100%;
 }
 #cp2016 .as-row{
 	display:table-row;
