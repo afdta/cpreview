@@ -2,3 +2,14 @@ Change color scheme
 Investigate other scale options
 Great Lakes
 Nas in the data, how to encode those
+Only animate the tracts that change -- should smooth transitions greatly
+
+
+Display summary stats during transition -- number increasing, number 20%+, 40%+, pop totals, etc.
+Highlight biggest changers
+
+Allow user to switch period by using arrow keys
+
+try 5pct pt jumps -- see how atlanta differs
+
+allow user to specify transition time?
