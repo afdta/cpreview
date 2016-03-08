@@ -1,0 +1,17 @@
+From: https://www.census.gov/programs-surveys/acs/technical-documentation/table-and-geography-changes/2009/geography-changes.html
+Retrieved 3/8/2016
+***
+
+Census Tracts and Block Groups in 2005-2009 ACS 5-year Estimates with Geographic Code and Definition Problems
+
+Census tracts and block groups used to tabulate and present 2005-2009 ACS 5-year estimates are those defined for Census 2000. However, in 19 counties from 8 different states, many of the census tracts and block groups used to tabulate and present the 2005-2009 ACS 5-year estimates are either those submitted to the Census Bureau for the 2010 Census, or a preliminary version of 2010 Census definitions. These census tracts and block groups were inadvertently included in the version of the Census Bureau's geographic database (TIGER) used to produce geographic area information for the 2005-2009 ACS 5-year estimates.
+
+The effect on the 2005-2009 ACS 5-year estimates for tracts and block groups in these counties is that the geographic definitions, tract identifiers (numbers) and/or block group identifiers (numbers) represent one of several possible states between their Census 2000 and 2010 Census definition. In some cases it is an interim state that is neither the Census 2000 nor the 2010 Census definition.
+
+The spreadsheets document the census tracts and block groups that used geographic definitions and/or identifiers (numbers) in the 2005-2009 ACS 5-year estimates did not match those for Census 2000. The spreadsheets do not list all Census 2000 tracts and block groups in the 19 counties. The 2005-2009 ACS tracts and block groups whose geographic definitions and geographic identifiers are the same as their Census 2000 definitions and identifiers are not included on the lists.
+
+The spreadsheets include 2010 vintage as a comparison in each list, because in many cases the 2005-2009 ACS definitions and identifiers for tracts and block groups on each list is the same as the 2010 geographic definitions and geographic identifiers (or is the 2010 definition with a different identifier). The purpose of inclusion is to identify the tracts and block groups where this condition is true, and acknowledge that in some cases comparisons to Census 2000 tracts and block groups is not possible.
+
+Census tract spreadsheet for the following affected counties: Bibb, AL; Cass, IA; Clay, IA; Dickinson, IA; Dubuque, IA; Emmet, IA; Sioux, IA; Union, IA; Worth, IA; Calvert, MD; Berkshire, MA; Baraga, MI; Murray, MN; and Wilson, TX.
+
+Block group spreadsheet for the following affected counties: Bibb, AL; Coles, IL; Adair, IA; Adams, IA; Cass, IA; Clay, IA; Dickinson, IA; Dubuque, IA; Emmet, IA; Madison, IA; Page, IA; Sioux, IA; Union, IA; Worth, IA; Calvert, MD; Berkshire, MA; Baraga, MI; Murray, MN; and Wilson, TX.
