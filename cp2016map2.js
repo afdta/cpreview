@@ -2,9 +2,11 @@
 
 if(!CP2016.session.svg){return null;} //no-op if svg not supported
 
+var indicator = "pov1014"
+
 var path = d3.geo.path().projection(null);
 var tractDB = {};
-var getDrawTracts = function(cbsa, name){
+var getDrawTracts = function(cbsa){
   var uri = CP2016.session.repo + "geojson/" + cbsa + ".json";
   var processDat = function(dat){
 
@@ -32,7 +34,7 @@ var getDrawTracts = function(cbsa, name){
       if((a.properties.city || b.properties.city) && a.properties.city !== b.properties.city){ //&& (a.properties.PLID !== b.properties.PLID)){
         var keep = true; 
       }
-      else if(a.properties.CITY ===1 && a===b){
+      else if(a.properties.city ===1 && a===b){
         var keep = true;
       }
       else{
@@ -44,6 +46,7 @@ var getDrawTracts = function(cbsa, name){
     //var meshCounty = topojson.mesh(dat,dat.objects.tracts,function(a,b){return a.id.substring(0,5) !== b.id.substring(0,5) || (a===b)});
     
     drawSVG(geojson, true, [meshCity]);
+    CP2016.metro = cbsa;
     //drawCanvas(geoJSON,MPAR.canvas);
     //[meshCounty,meshCity]
   } 
@@ -64,14 +67,13 @@ var getDrawTracts = function(cbsa, name){
     });
   }
 }
-//getDrawTracts("47900","Washington-Arlington-Alexandria, DC-VA-MD-WV");
 
 //combine draw functions into one that renders to svg and/or canvas
 function drawSVG(gj, fill, meshes){
   var sel = CP2016.dom.tractmap.tracts.selectAll("path.tract").data(gj.features);
   sel.exit().remove();
-  sel.enter().append("path").classed("tract",true);
-  sel.attr("d",path).attr({"stroke":"none","stroke-width":1}).attr("pointer-events","all").style("visibility","visible");
+  sel.enter().append("path").classed("tract",true).attr({"fill":"#ffffff","stroke":"#ffffff"});
+  sel.attr("d",path).attr({"stroke":"none","stroke-width":1}).style("pointer-events","all").style("visibility","visible");
   sel.attr("data-tract",function(d,i){
   	return d.id;
   });
@@ -93,14 +95,18 @@ function drawSVG(gj, fill, meshes){
   var m = CP2016.dom.tractmap.outlines.selectAll("path.tractMesh").data(meshes);
   m.exit().remove();
   m.enter().append("path").classed("tractMesh",true);
-  var borderColors = ["#555555","#ffcf1a"]; //metro & county, city(ies) "#e8a717"
-  m.attr({"fill":"none"}).attr("stroke-width",function(d,i){return "1"}).attr("d",path).attr("stroke",function(d,i){return borderColors[i]});
+  //var borderColors = ["#555555","#ffcf1a"]; //metro & county, city(ies) "#e8a717"
+  m.attr({"fill":"none"}).attr("stroke-width",function(d,i){return "2"}).attr("d",path)
+   .attr("stroke",function(d,i){
+    return "#333333";
+    //return borderColors[i];
+  }).attr("stroke-dasharray","2, 1")
   
   //select first (county) path and show or hide
   //MPAR.svg.tractOutlines.select("path").style("visibility",MPAR.input.countiesShown ? "visible" : "hidden");
   //m.attr("stroke-dasharray",function(d,i){return i===0 ? "8,3" : "none"})
 
-  shadeTracts(sel,gj);
+  shadeTracts(sel, gj);
 };
 
 
@@ -112,8 +118,29 @@ var range = function(n){
   return range;
 }
 
+var cols = ['#fee5d9','#fcae91','#fb6a4a','#de2d26','#a50f15']; 
+function v2c(v, borderCol){
+  if(v < 0.1){var index = 0}
+  else if(v<0.2){var index = 1}
+  else if(v<0.3){var index = 2}
+  else if(v<0.4){var index = 3}
+  else{ var index = 4}
+  var c = cols[index];
+  var lab = d3.lab(c);
+  if(!borderCol){
+    return c;
+  }
+  else{
+    return lab.darker(0.5).toString();
+  }
+}
+
 function shadeTracts(selection,geojson){
-  var indicator = "chpov";
+  //map colors, low-to-high, credit: Colorbrewer (http://colorbrewer2.org/) by Cynthia Brewer, Mark Harrower and The Pennsylvania State University
+
+  
+
+
   
   /*if(indicator==="JOBS12" || indicator==="JOBS00"){
     var fmt = formats.uni("num");
@@ -154,6 +181,7 @@ function shadeTracts(selection,geojson){
     return val;
   })
 
+/*
   //filter out nulls
   var dat2 = [];
   for(var dd=0; dd<dat.length; dd++){
@@ -172,19 +200,17 @@ function shadeTracts(selection,geojson){
   	else{return 0}
   })
 
-  //console.log(dat2.slice(-10));
-
   var median = d3.quantile(dat2, 0.5);
 
   var plarge = d3.quantile(dat2, 0.98);
   var psmall = d3.quantile(dat2, 0.02);
 
-  //console.log("5th: "+psmall+" | median: "+median+" | 95th: "+plarge);
-  
-  var min = psmall;
-  var max = plarge;
+  var min = d3.min(dat);
+  var min = 0;
+  var max = d3.max(dat);
+  var max = 0.4
   var maxAbs = d3.max([Math.abs(min),Math.abs(max)]);
-  var actualMin = min;
+  var actualMin = min;*/
 
   var AVG = SUM/NUM;
 
@@ -199,7 +225,7 @@ function shadeTracts(selection,geojson){
   }*/
 
 //create equal sized +/- sections
-  if(actualMin >= 0){
+  /*if(actualMin >= 0){
     min = 0;
   }
   else{
@@ -207,20 +233,38 @@ function shadeTracts(selection,geojson){
     max = maxAbs;
   };
 
-  var ncols = 4;
+  var ncols = 5;
   var lcols = actualMin < 0 ? ncols*2 : ncols;
 
-  var qs = CP2016.scales.quantile30.domain([min,max]).range(range(ncols));
-  var labcol = CP2016.color.lab;
+  var qs = CP2016.scales.quantile30.domain([0,0.4]).range(range(ncols));
+  var labcol = CP2016.color.lab;*/
+
+
 
   //labcol will get called with -1, -0.8, -0.6, -0.4, -0.2, 0.2, 0.4, 0.6, 0.8, or 1 -- never 0 (which maps to #ffffff)
   //values above plarge will be assigned the top category and values below psmall will be assigned the bottom category by qs
-  selection.attr("fill",function(d,i){
+  selection
+  .attr("stroke",function(d,i){
     try{
       var v = MAP(d);
-      var s = v < 0 ? -1 : 1;
+      var c = v2c(v,true);
+      /*var s = v < 0 ? -1 : 1;
       var t = (typeof v === "undefined" || v === null || isNaN(v) || !isFinite(v) ) ? null : qs(Math.abs(v))/ncols;
-      var c = labcol(t*s);
+      var c = labcol(t*s);*/
+    }
+    catch(e){
+      console.log(e);
+      var c = "#ffffff";
+    }
+    return c;
+  })
+  .transition().attr("fill",function(d,i){
+    try{
+      var v = MAP(d);
+      var c = v2c(v);
+      /*var s = v < 0 ? -1 : 1;
+      var t = (typeof v === "undefined" || v === null || isNaN(v) || !isFinite(v) ) ? null : qs(Math.abs(v))/ncols;
+      var c = labcol(t*s);*/
     }
     catch(e){
       var c = "#ffffff";
@@ -232,13 +276,15 @@ function shadeTracts(selection,geojson){
   //MPAR.title.indicator.text(MPAR.input.indicator.t);
   //if(dataTable.loadSummaryTable){dataTable.loadSummaryTable()};
 
+  var ncols = cols.length;
   var step = 1/ncols;
   var hstep = step/2; //pick a value in center of range to avoid rounding issues
   //quantize determines quantile: [min, min+step],(min+step, min+2*step], ... , (min+(n-1)*step, min+n*step] -- note that rounding errors may cause some fuzziness at boundaries using this calc
   //console.log(scales.quantile30(min + 14*step - 0.0000000001));
 
   var sliceHeight = 20;
-  var sliceDat = [];
+ 
+ /* var sliceDat = [];
 
   for(var i=0;i<ncols;i++){
     var upper = ((ncols-i)/ncols);
@@ -256,10 +302,10 @@ function shadeTracts(selection,geojson){
     }
   }
 
-  sliceDat.sort(function(a,b){return a.y-b.y});
+  sliceDat.sort(function(a,b){return a.y-b.y});*/
 
   var legend = CP2016.dom.tractmap.legend;
-  var rectG = legend.selectAll("g.legendSlice").data(sliceDat);
+  var rectG = legend.selectAll("g.legendSlice").data([]);
   rectG.enter().append("g").classed("legendSlice",true);
   rectG.exit().remove();
   rectG.attr("transform",function(d,i){return "translate(20," + (d.y+22) + ")"})
@@ -289,6 +335,16 @@ function shadeTracts(selection,geojson){
 
 };
 
+
+  var pbuttons = CP2016.dom.tractmap.periods.selectAll("div").data([{l:"2000", c:"pov00"}, {l:"2010-14", c:"pov1014"}]);
+  pbuttons.enter().append("div").append("p").classed("disable-select",true);
+  pbuttons.exit().remove();
+  pbuttons.select("p").text(function(d,i){return d.l});
+
+  pbuttons.on("mousedown",function(d,i){
+    indicator = d.c;
+    getDrawTracts(CP2016.metro);
+  });
 
 	CP2016.dom.table.fill(CP2016.dom.table.data, getDrawTracts);
 	CP2016.dom.table.resize();

@@ -66,3 +66,11 @@
 	height:300px;
 	pointer-events:none;
 }
+
+#cp2016 .horizontal-buttons > div{
+	float:left;
+	margin-right:20px;
+	cursor:pointer;
+}
+
+#cp2016 .horizontal-buttons > div.button-selected > p{color:#0D73D6;}

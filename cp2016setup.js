@@ -26,7 +26,7 @@
 			}
 		}
 	})();
-	CP2016.metro = CP2016.metroList[0];
+	CP2016.metro = CP2016.metroList[0].CBSA_Code;
 
 	CP2016.dom = {};
 	CP2016.dom.table = {};
@@ -41,10 +41,12 @@
 
 	CP2016.dom.tractmap = {};
 	CP2016.dom.tractmap.wrap = d3.select("#cp2016-tractmap");
+	CP2016.dom.tractmap.periods = CP2016.dom.tractmap.wrap.append("div").classed("horizontal-buttons c-fix",true);
 	CP2016.dom.tractmap.svg = CP2016.dom.tractmap.wrap.append("svg").style({"width":"100%","height":"100%"});
 	CP2016.dom.tractmap.tracts = CP2016.dom.tractmap.svg.append("g");
 	CP2016.dom.tractmap.outlines = CP2016.dom.tractmap.svg.append("g");
 	CP2016.dom.tractmap.legend = CP2016.dom.tractmap.wrap.append("svg").attr("id","tractmap-legend");
+
 
 	CP2016.dom.allviews = d3.selectAll(".cp2016-view");
 
@@ -92,6 +94,8 @@
 		var cells = rows.selectAll("div.as-cell").data(function(d,i){return d});
 		cells.enter().append("div").classed("as-cell",true);
 		cells.exit().remove();
+
+		cells.style("cursor","pointer");
 
 		cells.text(function(d,i){return d});
 
