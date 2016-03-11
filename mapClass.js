@@ -172,7 +172,7 @@ dotMap.prototype.setDim = function(){
 }
 
 //-------------------------------------------------{2}
-//set data to map. the method takes three args: 
+//set data to map. the method takes two args: 
 //(1) the array of objects, 
 //(2) name of the property in each object that contains the cbsa code, and 
 dotMap.prototype.setData = function(dat, geoVarName){
@@ -223,6 +223,7 @@ dotMap.prototype.setData = function(dat, geoVarName){
 
   return this;
 }
+//can't call setData data, because this prop already exists as data placeholder
 
 //-------------------------------------------------{3}
 //draw map
@@ -269,6 +270,7 @@ dotMap.prototype.drawMap = function(callback){
 
   return this;
 }
+dotMap.prototype.draw = dotMap.prototype.drawMap;
 
 //-------------------------------------------------{4}
 //make map responsive -- method attaches a window resize listener that handles repositioning of dots and states
@@ -411,4 +413,7 @@ dotMap.prototype.showTooltips = function(textAccessor){
     window.addEventListener("resize", hideTip);
 
   }
+
 }
+
+dotMap.prototype.showToolTips = dotMap.prototype.showTooltips;
