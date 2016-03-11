@@ -1,4 +1,4 @@
-#cp2016 p, #cp2016 a, #cp2016 li{
+#cp2016 p, #cp2016 a, #cp2016 li, #cp2016 select option{
 	font-family: arial, helvetica, sans;
 	font-size:15px;
 	color:#333333
@@ -34,6 +34,12 @@
 	visibility:visible;
 	height:600px;
 	height:100vh;
+	width:100%;
+
+	-webkit-transition:opacity 0.75s ease;
+	-moz-transition:opacity 0.75s ease;
+	-o-transition:opacity 0.75s ease;
+	transition:opacity 0.75s ease;
 }
 
 #cp2016 .cp2016-view.out-of-view{
@@ -42,6 +48,11 @@
 	top:0%;
 	opacity:0;
 	visibility:hidden;
+
+	-webkit-transition:opacity 0s ease;
+	-moz-transition:opacity 0s ease;
+	-o-transition:opacity 0s ease;
+	transition:opacity 0s ease;
 }
 
 #cp2016 .as-table{
@@ -50,10 +61,10 @@
 	table-layout: fixed;
 	width:100%;
 }
-#cp2016 .as-row{
+#cp2016 .as-table > .as-row{
 	display:table-row;
 }
-#cp2016 .as-cell{
+#cp2016 .as-row > .as-cell{
 	display:table-cell;
 	padding:5px 3px 2px 3px;
 }
@@ -74,3 +85,23 @@
 }
 
 #cp2016 .horizontal-buttons > div.button-selected > p{color:#0D73D6;}
+
+#cp2016 select{
+	background:#ffffff;
+	border:1px solid #aaaaaa;
+	outline:0px solid #aaaaaa;
+	padding:5px;
+	margin:0px;
+	font-size:15px;
+}
+
+/*
+#cp2016 select:focus{
+	outline:1px solid #ffffff;
+}*/
+
+#cp2016 select option{
+	background:#ffffff;
+	font-size:15px;
+	font-family:arial;
+}
