@@ -13,3 +13,10 @@ Allow user to switch period by using arrow keys
 try 5pct pt jumps -- see how atlanta differs
 
 allow user to specify transition time?
+
+Come up with a better queuing system...
+
+	1) get tract data
+	2) set callback to draw tract data after it downloads
+		i) any changes to view or selecting another metro area cancels callback
+		ii) you want the ability to execute the current callback when another event ends -- this allows download in background, draw when you want

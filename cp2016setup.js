@@ -26,9 +26,23 @@
 			}
 		}
 	})();
-	CP2016.metro = CP2016.metroList[0].CBSA_Code;
+	
+	//STATE
+	CP2016.state = {};
+	CP2016.state.metro = CP2016.metroList[0].CBSA_Code;
+	CP2016.state.geolevel = "Metro";
+	CP2016.state.race = "All";
+	CP2016.state.period = "2010_14";
+	CP2016.state.metric = "poor20sh";
 
+	CP2016.drawTracts = null;
+
+	//DOM ELEMENTS
 	CP2016.dom = {};
+
+	CP2016.dom.menu = {};
+	CP2016.dom.menu.wrap = d3.select("#cp2016-shared-menu").classed("c-fix",true);
+
 	CP2016.dom.table = {};
 	CP2016.dom.table.wrap = d3.select("#cp2016-table");
 	CP2016.dom.table.header = CP2016.dom.table.wrap.append("div");
@@ -37,7 +51,7 @@
 	
 	CP2016.dom.dotmap = {};
 	CP2016.dom.dotmap.wrap = d3.select("#cp2016-dotmap");
-	CP2016.dom.dotmap.svg = CP2016.dom.dotmap.wrap.append("svg").style({"width":"100%","height":"100%"});
+	//CP2016.dom.dotmap.svg = CP2016.dom.dotmap.wrap.append("svg").style({"width":"100%","height":"100%"});
 
 	CP2016.dom.tractmap = {};
 	CP2016.dom.tractmap.wrap = d3.select("#cp2016-tractmap");
@@ -46,6 +60,15 @@
 	CP2016.dom.tractmap.tracts = CP2016.dom.tractmap.svg.append("g");
 	CP2016.dom.tractmap.outlines = CP2016.dom.tractmap.svg.append("g");
 	CP2016.dom.tractmap.legend = CP2016.dom.tractmap.wrap.append("svg").attr("id","tractmap-legend");
+
+	CP2016.dom.tractmap.zoom = {};
+	CP2016.dom.tractmap.zoom.in = d3.select("#zoomCtrlIn");
+	CP2016.dom.tractmap.zoom.out = d3.select("#zoomCtrlOut");
+	CP2016.dom.tractmap.zoom.scale = 1; //current zoom scale
+	CP2016.dom.tractmap.zoom.level = 0; //current zoom level in "levels" below
+	CP2016.dom.tractmap.zoom.levels = [1,2,3,5,8,12,17,23];
+	CP2016.dom.tractmap.zoom.yOffset = 0; //initial offset parameter
+	CP2016.dom.tractmap.zoom.translate = {x:0,y:CP2016.dom.tractmap.zoom.yOffset};
 
 
 	CP2016.dom.allviews = d3.selectAll(".cp2016-view");
@@ -56,7 +79,8 @@
 		else if(tableMap1or2==="map2"){var toshow = CP2016.dom.tractmap.wrap;}
 		else {var toshow = CP2016.dom.table.wrap;}
 		
-		toshow.classed("out-of-view",false);		
+		toshow.classed("out-of-view",false);
+		CP2016.dom.menu.wrap.classed("out-of-view", tableMap1or2==="map2");		
 	}
 
 

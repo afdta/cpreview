@@ -4,8 +4,11 @@ if(!CP2016.session.svg){return null;} //no-op if svg not supported
 
 var indicator = "pov1014"
 
+var zoom = CP2016.dom.tractmap.zoom;
+
 var path = d3.geo.path().projection(null);
 var tractDB = {};
+var current_cbsa = null;
 var getDrawTracts = function(cbsa){
   var uri = CP2016.session.repo + "geojson/" + cbsa + ".json";
   var processDat = function(dat){
@@ -45,8 +48,8 @@ var getDrawTracts = function(cbsa){
 
     //var meshCounty = topojson.mesh(dat,dat.objects.tracts,function(a,b){return a.id.substring(0,5) !== b.id.substring(0,5) || (a===b)});
     
-    drawSVG(geojson, true, [meshCity]);
-    CP2016.metro = cbsa;
+    drawSVG(geojson, current_cbsa === cbsa, [meshCity]);
+    current_cbsa = cbsa;
     //drawCanvas(geoJSON,MPAR.canvas);
     //[meshCounty,meshCity]
   } 
@@ -69,11 +72,11 @@ var getDrawTracts = function(cbsa){
 }
 
 //combine draw functions into one that renders to svg and/or canvas
-function drawSVG(gj, fill, meshes){
+function drawSVG(gj, transition, meshes){
   var sel = CP2016.dom.tractmap.tracts.selectAll("path.tract").data(gj.features);
   sel.exit().remove();
   sel.enter().append("path").classed("tract",true).attr({"fill":"#ffffff","stroke":"#ffffff"});
-  sel.attr("d",path).attr({"stroke":"none","stroke-width":1}).style("pointer-events","all").style("visibility","visible");
+  sel.attr("d",path).attr({"stroke-width":1}).style("pointer-events","all").style("visibility","visible");
   sel.attr("data-tract",function(d,i){
   	return d.id;
   });
@@ -106,7 +109,7 @@ function drawSVG(gj, fill, meshes){
   //MPAR.svg.tractOutlines.select("path").style("visibility",MPAR.input.countiesShown ? "visible" : "hidden");
   //m.attr("stroke-dasharray",function(d,i){return i===0 ? "8,3" : "none"})
 
-  shadeTracts(sel, gj);
+  shadeTracts(sel, gj, transition);
 };
 
 
@@ -135,7 +138,7 @@ function v2c(v, borderCol){
   }
 }
 
-function shadeTracts(selection,geojson){
+function shadeTracts(selection,geojson,transition){
   //map colors, low-to-high, credit: Colorbrewer (http://colorbrewer2.org/) by Cynthia Brewer, Mark Harrower and The Pennsylvania State University
 
   
@@ -243,8 +246,7 @@ function shadeTracts(selection,geojson){
 
   //labcol will get called with -1, -0.8, -0.6, -0.4, -0.2, 0.2, 0.4, 0.6, 0.8, or 1 -- never 0 (which maps to #ffffff)
   //values above plarge will be assigned the top category and values below psmall will be assigned the bottom category by qs
-  selection
-  .attr("stroke",function(d,i){
+  var strokeFN = function(d,i){
     try{
       var v = MAP(d);
       var c = v2c(v,true);
@@ -257,8 +259,9 @@ function shadeTracts(selection,geojson){
       var c = "#ffffff";
     }
     return c;
-  })
-  .transition().attr("fill",function(d,i){
+  }
+
+  var fillFN = function(d,i){
     try{
       var v = MAP(d);
       var c = v2c(v);
@@ -270,7 +273,20 @@ function shadeTracts(selection,geojson){
       var c = "#ffffff";
     }
     return c;
-  })
+  }
+
+  if(transition){
+     selection
+      .transition().duration(1400)
+      .attr("stroke", strokeFN)
+      .attr("fill", fillFN); 
+  }
+  else{
+     selection
+      .attr("stroke", strokeFN)
+      .attr("fill", fillFN);
+  }
+
 
   //MPAR.title.metro.text(MPAR.input.metro);
   //MPAR.title.indicator.text(MPAR.input.indicator.t);
@@ -343,11 +359,15 @@ function shadeTracts(selection,geojson){
 
   pbuttons.on("mousedown",function(d,i){
     indicator = d.c;
-    getDrawTracts(CP2016.metro);
+    getDrawTracts(CP2016.state.metro);
   });
 
+
+  CP2016.drawTracts = getDrawTracts;
+
+  //draw table
 	CP2016.dom.table.fill(CP2016.dom.table.data, getDrawTracts);
 	CP2016.dom.table.resize();
-	CP2016.dom.show("table");
+	//CP2016.dom.show("table");
 
 })(); //end closure
