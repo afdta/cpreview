@@ -101,7 +101,7 @@
 	CP2016.scales.quantile5 = d3.scale.quantize().domain([0,1]).range([1,2,3,4,5]);
 
 	//dat should be an array of arrays each row should have a code property attached to it for the metro code
-	CP2016.dom.table.fill = function(dat, rowcallback){
+	CP2016.dom.table.fill = function(dat){
 
 		var data = dat.slice(1);
 		var header = [dat[0]];
@@ -138,17 +138,20 @@
 
 		hcells.text(function(d,i){return d});
 
-		if(rowcallback){
-			rows.on("mousedown",function(d,i){
-				rowcallback.call(d, d.code);
-				CP2016.dom.show("map2");
-			});
-			rows.on("touchstart",function(d,i){
-				d3.event.preventDefault();
-				rowcallback.call(d, d.code);
-				CP2016.dom.show("map2");
-			})
-		}
+		rows.on("mousedown",function(d,i){
+			if(CP2016.drawTracts){
+				CP2016.drawTracts(d.code)
+			}
+			CP2016.dom.show("map2");
+		});
+		
+		rows.on("touchstart",function(d,i){
+			d3.event.preventDefault();
+			if(CP2016.drawTracts){
+				CP2016.drawTracts(d.code)
+			}
+			CP2016.dom.show("map2");
+		});
 	}
 
 	CP2016.dom.table.resize = function(){

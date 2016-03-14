@@ -365,9 +365,4 @@ function shadeTracts(selection,geojson,transition){
 
   CP2016.drawTracts = getDrawTracts;
 
-  //draw table
-	CP2016.dom.table.fill(CP2016.dom.table.data, getDrawTracts);
-	CP2016.dom.table.resize();
-	//CP2016.dom.show("table");
-
 })(); //end closure
