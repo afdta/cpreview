@@ -21,3 +21,13 @@ names(d) <- nms
 
 write.csv(d[c("cbsa","metro","geotype","groups","yr","poor","poor20","poor20sh","poor40","poor40sh")],
           file="/home/alec/Projects/Brookings/concentrated-poverty/data/poor.csv", row.names=FALSE)
+
+#EXPLORE
+library("ggplot2")
+library("metromonitor")
+all <- merge(d[d$geotype=="Metro" & d$groups=="All" & d$yr=="2010_14", ], 
+             metropops(TRUE, "2013")[c("CBSA_Code", "CBSA_Title", "lon", "lat")], by.x="cbsa", by.y="CBSA_Code")
+
+
+gg <- ggplot(all, aes(x=lon, y=lat))
+gg + geom_point(aes(size=poor20sh))
