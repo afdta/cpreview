@@ -41,7 +41,8 @@
 	CP2016.dom = {};
 
 	CP2016.dom.menu = {};
-	CP2016.dom.menu.wrap = d3.select("#cp2016-shared-menu").classed("c-fix",true).style("margin-bottom","20px");
+	CP2016.dom.menu.wrap = d3.select("#cp2016-shared-menu").classed("c-fix",true)
+								.style({"margin":"0px 0px 20px 0px", "padding":"0px 10px 10px 10px", "border-bottom":"1px solid #dddddd"});
 
 	CP2016.dom.table = {};
 	CP2016.dom.table.wrap = d3.select("#cp2016-table");

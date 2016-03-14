@@ -75,8 +75,7 @@
 		var mText = {poor20sh:"20%+", poor40sh:"40%+"};
 		var yText = {"2010_14":"2010–14", "2005_09":"2005–09", "2000":"2000"};
 
-		var title = "Share of the poor" + gText[CP2016.state.geolevel] + rText[CP2016.state.race] + " population that lives in a neighborhood with a poverty rate of " 
-						+ mText[CP2016.state.metric] +
+		var title = "Share of the poor" + gText[CP2016.state.geolevel] + rText[CP2016.state.race] + " population that lives in a neighborhood with a "+ mText[CP2016.state.metric]+" poverty rate" 
 						+ '<br /><span style="font-size:15px;font-weight:normal;">'+ yText[CP2016.state.period] +'</span>';
 
 		//(CP2016.state.race === "All" ? "" : ("that is "))
@@ -146,11 +145,11 @@
 
 		var labelStyle = {"margin":"10px 0px 3px 0px", "text-transform":"uppercase", "color":"#666666", "font-size":"11px"}
 		var menuMetric = menu.append("div");
-		menuMetric.append("p").text("Share of the poor population living in...").style(labelStyle);
-		var selMetric = menuMetric.append("select").datum("metric");
+		menuMetric.append("p").text("Severity of concentrated poverty").style(labelStyle);
+		var selMetric = menuMetric.append("select").datum("metric").style("min-width","100%");
 		selMetric.selectAll("option.valid-option")
-				 .data([{c:"poor20sh", l:"20%+ poverty rate neighborhoods"}, 
-						{c:"poor40sh", l:"40%+ poverty rate neighborhoods"}])
+				 .data([{c:"poor20sh", l:"20%+ poverty rate"}, 
+						{c:"poor40sh", l:"40%+ poverty rate"}])
 				 .enter().append("option")
 				 .text(function(d,i){return d.l})
 				 .attr("value",function(d,i){return d.c});
@@ -158,7 +157,7 @@
 
 		var menuGeolevel = menu.append("div");
 		menuGeolevel.append("p").text("Metro area portion").style(labelStyle);;
-		var selGeolevel = menuGeolevel.append("select").datum("geolevel");
+		var selGeolevel = menuGeolevel.append("select").datum("geolevel").style("min-width","100%");
 		selGeolevel.selectAll("option.valid-option").data([{c:"Metro", l:"Entire metro area"}, 
 														   {c:"City", l:"City portion"}, 
 														   {c:"Suburb", l:"Suburban portion"}]).enter().append("option")
@@ -168,7 +167,7 @@
 
 		var menuGroup = menu.append("div");
 		menuGroup.append("p").text("Race/ethnicity").style(labelStyle);
-		var selGroup = menuGroup.append("select").datum("race");
+		var selGroup = menuGroup.append("select").datum("race").style("min-width","100%");
 		selGroup.selectAll("option.valid-option").data([{c:"All", l:"All"}, 
 														   {c:"Black", l:"Black"}, 
 														   {c:"Hispanic", l:"Hispanic"},
@@ -180,7 +179,7 @@
 
 		var menuYear = menu.append("div");
 		menuYear.append("p").text("Time period").style(labelStyle);
-		var selYear = menuYear.append("select").datum("period");
+		var selYear = menuYear.append("select").datum("period").style("min-width","100%");
 		selYear.selectAll("option.valid-option").data([{c:"2010_14", l:"2010–14"},
 													   {c:"2005_09", l:"2005–09"},
 													   {c:"2000", l:"2000"}])
