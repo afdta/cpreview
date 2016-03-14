@@ -68,14 +68,22 @@
 
 			//console.log(CP2016);
 		});
+
+
+		var gText = {Metro: "", City: ", urban", Suburb:", suburban"};
+		var rText = {All: "", Black:" black", Hispanic:" Hispanic", White:" white"};
+		var mText = {poor20sh:"20%+", poor40sh:"40%+"};
+		var yText = {"2010_14":"2010–14", "2005_09":"2005–09", "2000":"2000"};
+
+		var title = "Share of the poor" + gText[CP2016.state.geolevel] + rText[CP2016.state.race] + " population that lives in a neighborhood with a poverty rate of " 
+						+ mText[CP2016.state.metric] +
+						+ '<br /><span style="font-size:15px;font-weight:normal;">'+ yText[CP2016.state.period] +'</span>';
+
+		//(CP2016.state.race === "All" ? "" : ("that is "))
+
+		this.title(title, {"margin":"0px 0px 0px 10px", "font-weight":"bold", "font-size":"18px"});
 		//self.select(CP2016.state.metro); //re-run select to resize select dot
 	}
-
-	function selChange(prop){
-		CP2016.state[prop] = this.value;
-	}
-
-
 
 	var current_zoom = 1;
 	var current_translate = [0,0];
@@ -92,9 +100,6 @@
 		console.log(center);
 		var target = [center[0] - (cx*zmax), center[1] - (cy*zmax)];
 
-
-
-		console.log(center);
 		var factory = function(){
 			var z = d3.interpolateNumber(1, zmax);
 			var x = d3.interpolateNumber(0, target[0]);
@@ -141,25 +146,15 @@
 
 		var labelStyle = {"margin":"10px 0px 3px 0px", "text-transform":"uppercase", "color":"#666666", "font-size":"11px"}
 		var menuMetric = menu.append("div");
-		menuMetric.append("p").text("Indicator").style(labelStyle);
+		menuMetric.append("p").text("Share of the poor population living in...").style(labelStyle);
 		var selMetric = menuMetric.append("select").datum("metric");
 		selMetric.selectAll("option.valid-option")
-				 .data([{c:"poor20sh", l:"Share of the poor living in high poverty neighborhoods"}, 
-						{c:"poor40sh", l:"Share of the poor living in extreme poverty neighborhoods "}])
+				 .data([{c:"poor20sh", l:"20%+ poverty rate neighborhoods"}, 
+						{c:"poor40sh", l:"40%+ poverty rate neighborhoods"}])
 				 .enter().append("option")
 				 .text(function(d,i){return d.l})
 				 .attr("value",function(d,i){return d.c});
 
-
-		var menuYear = menu.append("div");
-		menuYear.append("p").text("Time period").style(labelStyle);
-		var selYear = menuYear.append("select").datum("period");
-		selYear.selectAll("option.valid-option").data([{c:"2010_14", l:"2010–14"},
-													   {c:"2005_09", l:"2005–09"},
-													   {c:"2000", l:"2000"}])
-												.enter().append("option")
-												.text(function(d,i){return d.l})
-												.attr("value",function(d,i){return d.c});;
 
 		var menuGeolevel = menu.append("div");
 		menuGeolevel.append("p").text("Metro area portion").style(labelStyle);;
@@ -183,9 +178,19 @@
 														   .text(function(d,i){return d.l})
 														   .attr("value",function(d,i){return d.c});
 
+		var menuYear = menu.append("div");
+		menuYear.append("p").text("Time period").style(labelStyle);
+		var selYear = menuYear.append("select").datum("period");
+		selYear.selectAll("option.valid-option").data([{c:"2010_14", l:"2010–14"},
+													   {c:"2005_09", l:"2005–09"},
+													   {c:"2000", l:"2000"}])
+												.enter().append("option")
+												.text(function(d,i){return d.l})
+												.attr("value",function(d,i){return d.c});
+
+
 		menu.selectAll("select").on("change",function(d,i){
-			var self = this;
-			selChange.call(self, d);
+			CP2016.state[d] = this.value;
 			dmap.draw(redrawMap);
 		});
 

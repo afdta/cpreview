@@ -41,7 +41,7 @@
 	CP2016.dom = {};
 
 	CP2016.dom.menu = {};
-	CP2016.dom.menu.wrap = d3.select("#cp2016-shared-menu").classed("c-fix",true);
+	CP2016.dom.menu.wrap = d3.select("#cp2016-shared-menu").classed("c-fix",true).style("margin-bottom","20px");
 
 	CP2016.dom.table = {};
 	CP2016.dom.table.wrap = d3.select("#cp2016-table");
@@ -140,18 +140,20 @@
 
 		rows.on("mousedown",function(d,i){
 			if(CP2016.drawTracts){
-				CP2016.drawTracts(d.code)
+				CP2016.drawTracts(d.code);
+				CP2016.dom.show("map2");
 			}
-			CP2016.dom.show("map2");
 		});
 		
 		rows.on("touchstart",function(d,i){
 			d3.event.preventDefault();
 			if(CP2016.drawTracts){
-				CP2016.drawTracts(d.code)
+				CP2016.drawTracts(d.code);
+				CP2016.dom.show("map2");
 			}
-			CP2016.dom.show("map2");
 		});
+
+		if(CP2016.dom.table.resize){CP2016.dom.table.resize();}
 	}
 
 	CP2016.dom.table.resize = function(){
