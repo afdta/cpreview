@@ -160,10 +160,15 @@
 	CP2016.dom.table.resize = function(){
 		//resize in next tick cycle
 		setTimeout(function(){
-			var box = CP2016.dom.table.body.selectAll("div.as-row").node().getBoundingClientRect();
-			var w = box.right-box.left;
+			try{
+				var box = CP2016.dom.table.body.selectAll("div.as-row").node().getBoundingClientRect();
+				var w = box.right-box.left;
 
-			CP2016.dom.table.header.selectAll("div.as-table").style("width",w+"px");		
+				CP2016.dom.table.header.selectAll("div.as-table").style("width",w+"px");	
+				}
+			catch(e){
+				//no-op
+			}	
 		}, 0);
 	}
 

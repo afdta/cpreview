@@ -39,7 +39,7 @@
 
 		var arr = this.data.map(accessor);
 		var max = 1;
-		console.log(max);
+
 		var maxR = 10;
 		var maxA = Math.PI*(maxR*maxR);
 
@@ -88,15 +88,17 @@
 	var current_translate = [0,0];
 	function zoomin(dot,callback){
 		var self = this;
-		self.highlight();
+
 		var DOT = d3.select(dot);
 		var cx = +DOT.attr("cx");
 		var cy = +DOT.attr("cy");
 		var r = +DOT.attr("r");
 		var zmax = (self.width/(r*2));
 
+		self.highlight();
+		self.select(DOT.datum().geo);
+
 		var center = [self.width/2, self.height/2];
-		console.log(center);
 		var target = [center[0] - (cx*zmax), center[1] - (cy*zmax)];
 
 		var factory = function(){
@@ -116,6 +118,7 @@
 				CP2016.dom.show("map2");
 				callback();
 				self.svg.attr("transform","translate(0,0) scale(1)").style("opacity",1);
+				self.select();
 			});
 	}
 
