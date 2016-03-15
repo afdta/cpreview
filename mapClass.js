@@ -1,4 +1,5 @@
 //DEPENDS: d3 
+//To do: Revise structure so that approx. 50px-100px from svg overflows container -- prevents noticable clipping in edge cases
 
 //-------------------------------------------------{0}
 //dotMap class definition
