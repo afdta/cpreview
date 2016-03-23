@@ -2,64 +2,103 @@
 	if(!CP2016.session.svg){return null;} //no-op if svg not supported
 	var datafile = CP2016.session.repo + "poor.csv";
 
-	var data = [];
+	var dat; //will be assigned the metro area nest of data
+	var data = []; //will hold array of metro area objects
 	
 	var parser = function(d,i){
 		return d;
 	}
 
 	var pround = d3.format(",.1%");
-	var accessor = null;
-	var textAccessor = function(d){
-		if(accessor){
-			var v = [pround(accessor(d))];
-		}
-		else{
-			var v = [];
-		}
-		return v;
-	}
+	var cpround = d3.format("+,.1%");
+	CP2016.pround = pround;
+	CP2016.cpround = cpround;
+
 	var cols = d3.interpolateLab("#ffeeee", "#ff0000");
 
-	function redrawMap(){
-		//console.log(JSON.stringify(CP2016.state));
-		//set accessor
+	//text accessor will have access to the map object as thisobject -- it depends on the current value of accessor
+	function textAccessor(d){
+		return ['<span style="margin-top:10px;font-size:26px">' + pround(this.getValue(d)) + '</span>'];
+	}
+
+	//radius function takes the value
+	function dotSizing(v){
+		var max = 1; //100%
+		var maxR = 10;
+		var maxA = Math.PI*(maxR*maxR);
 		var self = this;
-		accessor = function(d,i){
+
+		var ratio = v/max;
+		var area = ratio*maxA;
+		var r = Math.sqrt(area/Math.PI);
+		
+		return r;	
+	}
+
+	function dotFill(v){
+		return cols(v);
+	}
+
+	//resetting the accessor is a critical task for this callback -- it affects the tooltip text as well
+	function redrawMap(){
+		var self = this;
+
+		var accessor = function(d){
 			var geolevel = CP2016.state.geolevel;
 			var metric = CP2016.state.metric;
 			var race = CP2016.state.race;
 			var period = CP2016.state.period;
 			
-			var dat = d.data.dat;
-			var v = dat[geolevel][race][period][0]; 
+			var v = d.dat[geolevel][race][period][0]; 
 
 			return +v[metric];
+		};
+
+		var accessor2 = function(d){
+			var geolevel = CP2016.state.geolevel;
+			var metric = CP2016.state.metric;
+			var race = CP2016.state.race;
+			var v0 = d.dat[geolevel][race]["2000"][0];
+			var v1 = d.dat[geolevel][race]["2005_09"][0];
+			var v2 = d.dat[geolevel][race]["2010_14"][0];
+
+			return [+v0[metric], +v1[metric], +v2[metric]];
 		}
 
-		var arr = this.data.map(accessor);
-		var max = 1;
+		self.setAccessor(accessor);
+		self.setAes("fill", dotFill);
+		self.setAes("r", dotSizing);
+		self.legend("c",pround);
 
-		var maxR = 10;
-		var maxA = Math.PI*(maxR*maxR);
+		var sort_index;
+		var tableHeader = [["Metro area", "Share in 2000", "Share in 2005–09", "Share in 2010–14"]];
+		var tableRows = this.getData(accessor2).sort(function(a,b){
+			sort_index = CP2016.state.period==="2000" ? 0 : (CP2016.state.period==="2005_09" ? 1 : 2);
+			return b.value[sort_index] - a.value[sort_index];
+		});
 
-		this.metros.attr("r",function(d,i){
-			var val = accessor(d);
-			var ratio = val/max;
-			var area = ratio*maxA;
-			var r = Math.sqrt(area/Math.PI);
-			return r;
+		var tableRowsFmt = tableRows.map(function(d,i){
+								var row = [d.metro, pround(d.value[0]), pround(d.value[1]), pround(d.value[2])];
+								row.code = d.geo;
+								return row;
+							});
+		
+
+		var tableArr = tableHeader.concat(tableRowsFmt);
+		var hcells = CP2016.dom.table.fill(tableArr);
+		hcells.classed("sort-desc", function(d,i){
+			return (i-1) === sort_index;
 		})
-		.attr("fill",function(d,i){
-			var v = accessor(d);
-			return cols(v);
-		})
-		.attr("stroke","#999999");
+		CP2016.dom.table.resize();
+
+		var arr = this.getData();
+
+
+		this.metros.attr("stroke","#999999");
 
 		this.metros.on("mousedown",function(d,i){
 			//self.select(d.geo);
 			zoomin.call(self, this, function(){
-				CP2016.state.metro = d.geo;
 				if(CP2016.drawTracts){
 					CP2016.drawTracts(d.geo);
 				}				
@@ -67,7 +106,7 @@
 
 
 			//console.log(CP2016);
-		});
+		}).style("cursor","pointer");
 
 
 		var gText = {Metro: "", City: ", urban", Suburb:", suburban"};
@@ -75,12 +114,14 @@
 		var mText = {poor20sh:"20%+", poor40sh:"40%+"};
 		var yText = {"2010_14":"2010–14", "2005_09":"2005–09", "2000":"2000"};
 
-		var title = "Share of the poor" + gText[CP2016.state.geolevel] + rText[CP2016.state.race] + " population that lives in a neighborhood with a "+ mText[CP2016.state.metric]+" poverty rate" 
-						+ '<br /><span style="font-size:15px;font-weight:normal;">'+ yText[CP2016.state.period] +'</span>';
+		var title1 = "Share of the poor" + gText[CP2016.state.geolevel] + rText[CP2016.state.race] + " population living in a neighborhood with a "+ mText[CP2016.state.metric]+" poverty rate, "+yText[CP2016.state.period];
+		//var title2 =  '<br /><span style="font-size:15px;font-weight:normal;">'+ yText[CP2016.state.period] +'</span>';
+		var title3 = '<br /><span style="font-size:15px;font-weight:normal;">Click on a metro area to view its neighborhood-level map</span>';
 
 		//(CP2016.state.race === "All" ? "" : ("that is "))
-
-		this.title(title, {"margin":"0px 0px 0px 10px", "font-weight":"bold", "font-size":"18px"});
+		var titleStyle = {"margin":"0px 45px 0px 10px", "font-weight":"bold", "font-size":"17px"};
+		this.title(title1 + title3, titleStyle);
+		CP2016.dom.table.title.html(title1 + title3).style({"font-weight":"bold","font-size":"17px", "margin":"0px 45px 10px 0px"});
 		//self.select(CP2016.state.metro); //re-run select to resize select dot
 	}
 
@@ -97,6 +138,7 @@
 
 		self.highlight();
 		self.select(DOT.datum().geo);
+		CP2016.dom.menu.wrap.classed("out-of-view",true);
 
 		var center = [self.width/2, self.height/2];
 		var target = [center[0] - (cx*zmax), center[1] - (cy*zmax)];
@@ -112,11 +154,11 @@
 				self.svg.attr("transform","translate(" + xx +","+ yy + ") scale("+zz+")").style("opacity",1-t);
 			}
 		} 
-
+		callback(); //since visibility is hidden until view is show, this shouldn't cause jittery zoom
 		self.svg.transition().duration(1500).tween("zoomWayIn", factory)
 			.each("end",function(d,i){
 				CP2016.dom.show("map2");
-				callback();
+				//callback();
 				self.svg.attr("transform","translate(0,0) scale(1)").style("opacity",1);
 				self.select();
 			});
@@ -129,7 +171,7 @@
 		  			 .key(function(d,i){return d.geotype})
 		  			 .key(function(d,i){return d.groups})
 		  			 .key(function(d,i){return d.yr});
-		var dat = nest.map(d);
+		dat = nest.map(d);
 		
 		for(k in dat){
 			if(dat.hasOwnProperty(k)){
@@ -137,16 +179,20 @@
 			}
 		}
 
-		dmap = new dotMap(CP2016.dom.dotmap.wrap.node()).setData(data, "geo");
-		dmap.makeResponsive().draw(redrawMap).showToolTips(textAccessor);
+		dmap = new dotMap(CP2016.dom.dotmap.mapwrap.node());
+		dmap.setData(data,"geo").makeResponsive().draw(redrawMap).showToolTips(textAccessor);
 
+		//dmap.lookup is generated during setData -- expose this in the global state so it can be used in the tractmap
+		//CP2016.state.lookup = dmap.lookup;
+		
 		//fill out the menu
-		CP2016.dom.menu.wrap.append("div")
-							.append("p").text("Make a selection").style({"margin":"0px","font-style":"italic"});
-		var menu = CP2016.dom.menu.wrap.append("div")
-									   .classed("horizontal-buttons c-fix",true)
+		var menu = CP2016.dom.menu.content;
 
-		var labelStyle = {"margin":"10px 0px 3px 0px", "text-transform":"uppercase", "color":"#666666", "font-size":"11px"}
+		menu.append("div").style("margin-top","12px")
+							.append("p").text("Make a selection").style({"margin":"0px","font-style":"italic"});
+		
+
+		var labelStyle = {"margin":"0px 0px 3px 0px", "text-transform":"uppercase", "color":"#666666", "font-size":"11px"}
 		var menuMetric = menu.append("div");
 		menuMetric.append("p").text("Severity of concentrated poverty").style(labelStyle);
 		var selMetric = menuMetric.append("select").datum("metric").style("min-width","100%");
@@ -190,21 +236,46 @@
 												.text(function(d,i){return d.l})
 												.attr("value",function(d,i){return d.c});
 
+		CP2016.dom.table.button = menu.append("p").text("View data table »")
+										.style({"margin":"20px 0px 20px 10px", "cursor":"pointer"})
+										.on("mousedown",function(d,i){
+											d3.event.stopPropagation();
+											var toshow = CP2016.dom.table.wrap.classed("out-of-view");
+											var thiz = d3.select(this);
+											if(toshow){
+												CP2016.dom.table.wrap.classed("out-of-view",false);	
+												thiz.text("« Hide table")
+											}
+											else{
+												CP2016.dom.table.wrap.classed("out-of-view",true);
+												thiz.text("View data table »")
+											}
+											//CP2016.dom.menu.content.classed("out-of-view",true);
+										});
+
 
 		menu.selectAll("select").on("change",function(d,i){
 			CP2016.state[d] = this.value;
 			dmap.draw(redrawMap);
 		});
 
+		CP2016.dom.menu.button.style("visibility","visible").on("mousedown", function(){
+			var show = !menu.classed("out-of-view");
+			menu.classed("out-of-view",show);
+		});
+
+		var tiptimer;
+		CP2016.dom.menu.wrap.on("mouseleave",function(d,i){
+			tiptimer = setTimeout(function(){
+				menu.classed("out-of-view",true);
+			},150);
+		}).on("mouseenter",function(d,i){
+			clearTimeout(tiptimer);
+		});
+
 		return data;
 	});
 
 	CP2016.dom.show("map1");
-
-
-
-	function buildTable(dat){
-		
-	}
 	
 })();

@@ -4,15 +4,15 @@ Great Lakes
 Nas in the data, how to encode those
 Only animate the tracts that change -- should smooth transitions greatly
 
+Redo the show/hide of the table
+
+Don't reveal tract map until it's been drawn
 
 Display summary stats during transition -- number increasing, number 20%+, 40%+, pop totals, etc.
 Highlight biggest changers
 
 Allow user to switch period by using arrow keys
-
-try 5pct pt jumps -- see how atlanta differs
-
-allow user to specify transition time?
+missing tract data?? Is there any?
 
 Come up with a better queuing system...
 
@@ -20,3 +20,5 @@ Come up with a better queuing system...
 	2) set callback to draw tract data after it downloads
 		i) any changes to view or selecting another metro area cancels callback
 		ii) you want the ability to execute the current callback when another event ends -- this allows download in background, draw when you want
+
+	>> See notebook for notes on this

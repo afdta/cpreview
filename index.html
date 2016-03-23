@@ -8,20 +8,60 @@
 
 <script src="d3min.js"></script>
 <script src="topojson.js"></script>
+<script src="mapClass.js"></script>
 
 <div style="width:100%; max-width:950px; position:relative;margin:0px auto;">
 
-<div id="cp2016" style="position:relative;width:100%;">
-  <div id="cp2016-shared-menu" class="cp2016-view out-of-view" style="height:auto;"></div>
-  <div id="cp2016-table" class="cp2016-view out-of-view"></div>
-  <div id="cp2016-dotmap" class="cp2016-view out-of-view"></div>
-  <div id="cp2016-tractmap" class="cp2016-view out-of-view"></div>
+<div id="cp2016" class="" style="position:relative;width:100%;">
+  <div id="cp2016-dotmap-wrap" class="cp2016-view out-of-view">
+    <div id="cp2016-dotmap" style="padding-top:15px;"></div>
+    <div id="cp2016-table" class="pinned-left-rail out-of-view" style="height:100%;width:100%;padding:15px;">
+    	<p id="cp2016-table-title" style="margin-top:0px;"></p>
+    </div>
+    <div id="cp2016-shared-menu">
+      <div id="cp2016-shared-menu-content" class="pinned-right-rail out-of-view"></div>
+    </div>
+    <div id="cp2016-shared-menu-button" class="metro-interactive-info-button" style="z-index:100;visibility:hidden;"><div></div></div>
+  </div>
+  
+  <div id="cp2016-tractmap-outer" class="cp2016-view out-of-view">
+  	<div style="padding:15px 5px 10px 5px;margin-bottom:1px;border-bottom:1px solid #aaaaaa;" class="c-fix">
+	  	<div id="cp2016-tract-map-back" style="cursor:pointer;margin:-5px;padding:5px 15px;float:left;"><p>« Back</p></div>
+	  	<div id="cp2016-tract-map-buttons" style="float:right">
+	  		<p>Select a time period: </p>
+	  	</div>
+	 </div>
+
+	 <div id="cp2016-tractmap" style="position:relative;">
+		<div id="cp2016-tractmap-title" style="pointer-events:none;">
+			
+		</div>
+
+	  	<div id="zoomCtrlWrap">
+	      <div id="zoomCtrl" class="noselectp">
+	        <div id="zoomCtrlIn">
+	          <svg>
+	            <path d="M16,9 l0,12"></path>
+	            <path d="M10,15 l12,0"></path>
+	          </svg>
+	        </div>
+	        <div id="zoomCtrlOut" class="noMoreZoom">
+	          <svg>
+	            <path d="M10,15 l12,0"></path>
+	          </svg>
+	        </div>
+	      </div>
+	    </div>
+	 </div>
+
+  </div>
+
+  <div style="position:relative;height:5px"></div>
 </div>
 
 </div>
 
 <script src="cp2016setup.js"></script>
-<script src="mapClass.js"></script>
 <script src="cp2016map1.js"></script>
 <script src="cp2016map2.js"></script>
 

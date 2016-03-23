@@ -29,7 +29,7 @@
 	
 	//STATE
 	CP2016.state = {};
-	CP2016.state.metro = CP2016.metroList[0].CBSA_Code;
+	CP2016.state.metro = null; //only relevant for tractmap -- this is null when tractmap not in view
 	CP2016.state.geolevel = "Metro";
 	CP2016.state.race = "All";
 	CP2016.state.period = "2010_14";
@@ -41,26 +41,42 @@
 	CP2016.dom = {};
 
 	CP2016.dom.menu = {};
-	CP2016.dom.menu.wrap = d3.select("#cp2016-shared-menu").classed("c-fix",true)
-								.style({"margin":"0px 0px 20px 0px", "padding":"0px 10px 10px 10px", "border-bottom":"1px solid #dddddd"});
+	CP2016.dom.menu.wrap = d3.select("#cp2016-shared-menu").classed("c-fix",true);
+	CP2016.dom.menu.button = d3.select("#cp2016-shared-menu-button");
+	CP2016.dom.menu.content = d3.select("#cp2016-shared-menu-content");
 
 	CP2016.dom.table = {};
 	CP2016.dom.table.wrap = d3.select("#cp2016-table");
+	CP2016.dom.table.title = d3.select("#cp2016-table-title");
 	CP2016.dom.table.header = CP2016.dom.table.wrap.append("div");
-	CP2016.dom.table.body = CP2016.dom.table.wrap.append("div").style({"max-height":"500px","overflow-y":"auto","border":"1px solid #aaaaaa","border-width":"1px 0px"});
+	CP2016.dom.table.body = CP2016.dom.table.wrap.append("div").style({"overflow-y":"auto","border":"1px solid #aaaaaa","border-width":"1px 0px","padding-right":"15px"});
 	CP2016.dom.table.footer = CP2016.dom.table.wrap.append("div");
+	CP2016.dom.table.button = null;
 	
 	CP2016.dom.dotmap = {};
-	CP2016.dom.dotmap.wrap = d3.select("#cp2016-dotmap");
+	CP2016.dom.dotmap.wrap = d3.select("#cp2016-dotmap-wrap");
+	CP2016.dom.dotmap.mapwrap = d3.select("#cp2016-dotmap");
 	//CP2016.dom.dotmap.svg = CP2016.dom.dotmap.wrap.append("svg").style({"width":"100%","height":"100%"});
 
 	CP2016.dom.tractmap = {};
-	CP2016.dom.tractmap.wrap = d3.select("#cp2016-tractmap");
-	CP2016.dom.tractmap.periods = CP2016.dom.tractmap.wrap.append("div").classed("horizontal-buttons c-fix",true);
-	CP2016.dom.tractmap.svg = CP2016.dom.tractmap.wrap.append("svg").style({"width":"100%","height":"100%"});
-	CP2016.dom.tractmap.tracts = CP2016.dom.tractmap.svg.append("g");
-	CP2016.dom.tractmap.outlines = CP2016.dom.tractmap.svg.append("g");
+	CP2016.dom.tractmap.WIDTH = 950;
+	CP2016.dom.tractmap.HEIGHT = 700;
+	CP2016.dom.tractmap.CENTER = [CP2016.dom.tractmap.WIDTH/2, CP2016.dom.tractmap.HEIGHT/2];
+
+	CP2016.dom.tractmap.outer = d3.select("#cp2016-tractmap-outer");
+	CP2016.dom.tractmap.wrap = d3.select("#cp2016-tractmap")
+								 	.style({"height":CP2016.dom.tractmap.HEIGHT+"px", "width":CP2016.dom.tractmap.WIDTH+"px"});
+	// = CP2016.dom.tractmap.wrap.append("div").classed("horizontal-buttons c-fix",true);
+	CP2016.dom.tractmap.title = d3.select("#cp2016-tractmap-title").append("p")
+	CP2016.dom.tractmap.svg = CP2016.dom.tractmap.wrap.append("svg").style({"cursor":"move","width":"100%","height":"100%","visibility":"hidden"});
+	CP2016.dom.tractmap.tractwrap = CP2016.dom.tractmap.svg.append("g");
+	CP2016.dom.tractmap.tracts = CP2016.dom.tractmap.tractwrap.append("g");
+	CP2016.dom.tractmap.outlines = CP2016.dom.tractmap.tractwrap.append("g");
+	CP2016.dom.tractmap.hovertract = CP2016.dom.tractmap.tractwrap.append("g").append("path");
 	CP2016.dom.tractmap.legend = CP2016.dom.tractmap.wrap.append("svg").attr("id","tractmap-legend");
+	CP2016.dom.tractmap.back = d3.select("#cp2016-tract-map-back");
+	CP2016.dom.tractmap.periods = d3.select("#cp2016-tract-map-buttons").classed("horizontal-buttons c-fix",true);
+	CP2016.dom.tractmap.tip = CP2016.dom.tractmap.wrap.append("div").classed("cp2016-tooltip",true);
 
 	CP2016.dom.tractmap.zoom = {};
 	CP2016.dom.tractmap.zoom.in = d3.select("#zoomCtrlIn");
@@ -68,20 +84,28 @@
 	CP2016.dom.tractmap.zoom.scale = 1; //current zoom scale
 	CP2016.dom.tractmap.zoom.level = 0; //current zoom level in "levels" below
 	CP2016.dom.tractmap.zoom.levels = [1,2,3,5,8,12,17,23];
-	CP2016.dom.tractmap.zoom.yOffset = 0; //initial offset parameter
-	CP2016.dom.tractmap.zoom.translate = {x:0,y:CP2016.dom.tractmap.zoom.yOffset};
+	CP2016.dom.tractmap.zoom.yOffset = 50;
+	CP2016.dom.tractmap.zoom.translate = {x:0,y:0 + CP2016.dom.tractmap.zoom.yOffset};
 
 
 	CP2016.dom.allviews = d3.selectAll(".cp2016-view");
 
-	CP2016.dom.show = function(tableMap1or2){
+	CP2016.dom.show = function(map1or2){
 		CP2016.dom.allviews.classed("out-of-view",true);
-		if(tableMap1or2==="map1"){var toshow = CP2016.dom.dotmap.wrap;}
-		else if(tableMap1or2==="map2"){var toshow = CP2016.dom.tractmap.wrap;}
-		else {var toshow = CP2016.dom.table.wrap;}
+		if(map1or2==="map1"){
+			var toshow = CP2016.dom.dotmap.wrap;
+			CP2016.dom.menu.button.style("display","block");
+			CP2016.dom.tractmap.svg.style("visibility","hidden");
+		}
+		else if(map1or2==="map2"){
+			var toshow = CP2016.dom.tractmap.outer;
+			CP2016.dom.menu.button.style("display","none");
+		}
+		else {
+			var toshow = CP2016.dom.dotmap.wrap; //dotmap is default
+		}
 		
-		toshow.classed("out-of-view",false);
-		CP2016.dom.menu.wrap.classed("out-of-view", tableMap1or2==="map2");		
+		toshow.classed("out-of-view",false);	
 	}
 
 
@@ -113,16 +137,21 @@
 		body.exit().remove();
 
 		var rows = body.selectAll("div.as-row").data(function(d,i){return d});
-		rows.enter().append("div").classed("as-row",true);
+		rows.enter().append("div").classed("as-row row-highlight",true);
 		rows.exit().remove();
 
 		var cells = rows.selectAll("div.as-cell").data(function(d,i){return d});
-		cells.enter().append("div").classed("as-cell",true);
+		cells.enter().append("div").classed("as-cell",true).append("p");
 		cells.exit().remove();
+
+		cells.style("width",function(d,i){
+			return i===0 ? "40%" : "20%"
+		})
 
 		cells.style("cursor","pointer");
 
-		cells.text(function(d,i){return d});
+		cells.select("p").text(function(d,i){return d})
+						 .style("text-align",function(d,i){return i===0 ? "left" :"right"});
 
 		//header
 		var hbody = CP2016.dom.table.header.selectAll("div.as-table").data([header]);
@@ -134,10 +163,15 @@
 		hrows.exit().remove();
 
 		var hcells = hrows.selectAll("div.as-cell").data(function(d,i){return d});
-		hcells.enter().append("div").classed("as-cell",true);
+		hcells.enter().append("div").classed("as-cell",true).append("p");
 		hcells.exit().remove();
 
-		hcells.text(function(d,i){return d});
+		hcells.style("width",function(d,i){
+			return i===0 ? "40%" : "20%"
+		})
+
+		hcells.select("p").text(function(d,i){return d})
+						  .style("text-align",function(d,i){return i===0 ? "left" :"right"});
 
 		rows.on("mousedown",function(d,i){
 			if(CP2016.drawTracts){
@@ -154,15 +188,28 @@
 			}
 		});
 
+		//rows.on("mouseenter",function(d,i){d3.select(this).classed("as-row",false)});
+		//rows.on("mouseleave",function(d,i){d3.select(this).classed("as-row",true)})
+
 		if(CP2016.dom.table.resize){CP2016.dom.table.resize();}
+
+		return hcells;
 	}
 
 	CP2016.dom.table.resize = function(){
 		//resize in next tick cycle
 		setTimeout(function(){
 			try{
+				var obox = CP2016.dom.table.wrap.node().getBoundingClientRect();
+				var hbox = CP2016.dom.table.header.node().getBoundingClientRect();
 				var box = CP2016.dom.table.body.selectAll("div.as-row").node().getBoundingClientRect();
 				var w = box.right-box.left;
+
+				var oh = obox.bottom - obox.top;
+				
+				var off = hbox.bottom - obox.top + 20; //bottom of header - top of outer box (space used up above body)
+
+				CP2016.dom.table.body.style("height", Math.round(oh-off)+"px");
 
 				CP2016.dom.table.header.selectAll("div.as-table").style("width",w+"px");	
 				}
@@ -171,20 +218,6 @@
 			}	
 		}, 0);
 	}
-
-	var tableData = function(){
-		var d = [];
-		for(var i=0; i<CP2016.metroList.length; i++){
-			var o = CP2016.metroList[i];
-			var row = [o.CBSA_Code, o.CBSA_Title, o.lon, o.lat];
-			row.code = o.CBSA_Code;
-			d.push(row);
-			o = null;
-		}
-		return d;		
-	}
-
-	CP2016.dom.table.data = tableData();
 
 	window.addEventListener("resize", CP2016.dom.table.resize);
 
