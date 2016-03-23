@@ -1,6 +1,6 @@
 (function(){
 	if(!CP2016.session.svg){return null;} //no-op if svg not supported
-	var datafile = CP2016.session.repo + "poor.csv";
+	var datafile = CP2016.session.repo + "CPMetro.csv";
 
 	var dat; //will be assigned the metro area nest of data
 	var data = []; //will hold array of metro area objects
@@ -14,17 +14,21 @@
 	CP2016.pround = pround;
 	CP2016.cpround = cpround;
 
-	var cols = d3.interpolateLab("#ffeeee", "#ff0000");
+	var cols = d3.interpolateLab("#ffffbf", "#d7191c");
+	
+	var cols2r = d3.interpolateLab("#ffffbf", "#d7191c");
+	var cols2b = d3.interpolateLab("#ffffbf", "#2b83ba");
 
 	//text accessor will have access to the map object as thisobject -- it depends on the current value of accessor
 	function textAccessor(d){
-		return ['<span style="margin-top:10px;font-size:26px">' + pround(this.getValue(d)) + '</span>'];
+		var fmt = CP2016.state.period in {"00to0509":1, "0509to1014":1} ? cpround : pround;
+		return ['<span style="margin-top:10px;font-size:26px">' + fmt(this.getValue(d)) + '</span>'];
 	}
 
 	//radius function takes the value
 	function dotSizing(v){
 		var max = 1; //100%
-		var maxR = 10;
+		var maxR = 13;
 		var maxA = Math.PI*(maxR*maxR);
 		var self = this;
 
@@ -35,8 +39,28 @@
 		return r;	
 	}
 
+	function dotSizing2(v){
+		var max = 0.4; //100%
+		var maxR = 13;
+		var maxA = Math.PI*(maxR*maxR);
+		var self = this;
+
+		var ratio = Math.abs(v)/max;
+		var area = ratio*maxA;
+		var r = Math.sqrt(area/Math.PI) + 1; //add 1 to avoid 0 radius dots
+		
+		return r;		
+	}
+
 	function dotFill(v){
 		return cols(v);
+	}
+
+	function dotFill2(v){
+		var ratio = v < 0 ? Math.abs(v)/0.4 : v/0.4;
+		if(ratio > 1){ratio = 1}
+		var c = v < 0 ? cols2b(ratio) : cols2r(ratio);
+		return c;
 	}
 
 	//resetting the accessor is a critical task for this callback -- it affects the tooltip text as well
@@ -66,9 +90,14 @@
 		}
 
 		self.setAccessor(accessor);
-		self.setAes("fill", dotFill);
-		self.setAes("r", dotSizing);
-		self.legend("c",pround);
+		self.setAes("fill", CP2016.state.period in {"00to0509":1, "0509to1014":1} ? dotFill2 : dotFill);
+		self.setAes("r", CP2016.state.period in {"00to0509":1, "0509to1014":1} ? dotSizing2 : dotSizing);
+		if(CP2016.state.period in {"00to0509":1, "0509to1014":1}){
+			self.legend([-0.4, -0.2, -0.1, 0.1, 0.2, 0.4], ["-40% pts.", "-20% pts.", "-10% pts.", "+10% pts.", "+20% pts.", "+40% pts."]);
+		}
+		else{
+			self.legend([0.2, 0.3, 0.5, 0.7, 0.9], ["20.0%", "30.0%", "50.0%", "70.0%", "90.0%"]);
+		}
 
 		var sort_index;
 		var tableHeader = [["Metro area", "Share in 2000", "Share in 2005–09", "Share in 2010–14"]];
@@ -112,7 +141,7 @@
 		var gText = {Metro: "", City: ", urban", Suburb:", suburban"};
 		var rText = {All: "", Black:" black", Hispanic:" Hispanic", White:" white"};
 		var mText = {poor20sh:"20%+", poor40sh:"40%+"};
-		var yText = {"2010_14":"2010–14", "2005_09":"2005–09", "2000":"2000"};
+		var yText = {"2010_14":"2010–14", "2005_09":"2005–09", "2000":"2000", "00to0509":"2000 to 2005–09", "0509to1014":"2005–09 to 2010–14"};
 
 		var title1 = "Share of the poor" + gText[CP2016.state.geolevel] + rText[CP2016.state.race] + " population living in a neighborhood with a "+ mText[CP2016.state.metric]+" poverty rate, "+yText[CP2016.state.period];
 		//var title2 =  '<br /><span style="font-size:15px;font-weight:normal;">'+ yText[CP2016.state.period] +'</span>';
@@ -179,6 +208,8 @@
 			}
 		}
 
+		console.log(d);
+
 		dmap = new dotMap(CP2016.dom.dotmap.mapwrap.node());
 		dmap.setData(data,"geo").makeResponsive().draw(redrawMap).showToolTips(textAccessor);
 
@@ -231,7 +262,10 @@
 		var selYear = menuYear.append("select").datum("period").style("min-width","100%");
 		selYear.selectAll("option.valid-option").data([{c:"2010_14", l:"2010–14"},
 													   {c:"2005_09", l:"2005–09"},
-													   {c:"2000", l:"2000"}])
+													   {c:"2000", l:"2000"},
+													   {c:"00to0509", l:"Change, 2000 to 2005–09"},
+													   {c:"0509to1014", l:"Change, 2005–09 to 2010–14"}
+													   ])
 												.enter().append("option")
 												.text(function(d,i){return d.l})
 												.attr("value",function(d,i){return d.c});

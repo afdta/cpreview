@@ -22,3 +22,6 @@ Come up with a better queuing system...
 		ii) you want the ability to execute the current callback when another event ends -- this allows download in background, draw when you want
 
 	>> See notebook for notes on this
+
+
+ask natalie about #div/0! errors in data
