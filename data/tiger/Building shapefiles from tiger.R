@@ -70,18 +70,21 @@ rownames(tractDTA) <- tractDTA$tract
 allshp <- SpatialPolygonsDataFrame(Sr, tractDTA[c("tract","exclude","supp","cbsa","city","plfips","pov00","pov1014")], match.ID = TRUE)
 length(allshp)
 
+allshp2 <- allshp[allshp@data$exclude==0 & allshp@data$supp==0, ]
+length(allshp2)
+
 #basic check
 ID1 <- sapply(Sr@polygons,function(e){return(e@ID)})
 ID2 <- rownames(tractDTA)
 ID2[!(ID2 %in% ID1)]
 ID1[!(ID1 %in% ID2)]
 
-cbsas <- unique(allshp@data[c("cbsa")])
+cbsas <- unique(allshp2@data[c("cbsa")])
 t100 <- metropops(TRUE, "2013")
 cbsa100 <- merge(cbsas, t100[c("CBSA_Code","CBSA_Title")], by.x="cbsa", by.y="CBSA_Code")
 
 makeWriteShp <- function(cbsa){
-  g <- allshp[as.character(allshp@data$cbsa)==cbsa & !is.na(allshp@data$cbsa),]
+  g <- allshp2[as.character(allshp2@data$cbsa)==cbsa & !is.na(allshp2@data$cbsa),]
   writeOGR(g, "/home/alec/Data/tiger-line/cbsa_shps10", cbsa, driver="ESRI Shapefile")
 }
 

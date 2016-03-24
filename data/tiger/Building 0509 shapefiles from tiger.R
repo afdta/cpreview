@@ -80,7 +80,7 @@ ninshape <- tractMetro[!(tractMetro$tract %in% shapes@data$CTIDFP00), ] #there a
 
 #create a clean spatial polygons object
 shapes_sub <- shapes[indat,]
-dat_sub <- tractMetro[inshp,c("tract","exclude","cbsa","city","plfips","pov0509")]
+dat_sub <- tractMetro[inshp,c("tract","exclude","supp","cbsa","city","plfips","pov0509")]
 
 Sr <- SpatialPolygons(shapes_sub@polygons, proj4string=shapes_sub@proj4string)
 
@@ -88,6 +88,8 @@ rownames(dat_sub) <- dat_sub$tract
 
 allshp <- SpatialPolygonsDataFrame(Sr, dat_sub, match.ID = TRUE)
 length(allshp)
+allshp2 <- allshp[allshp@data$exclude==0 & allshp@data$supp==0, ]
+length(allshp2)
 
 #basic check
 ID1 <- sapply(Sr@polygons,function(e){return(e@ID)})
@@ -96,7 +98,7 @@ ID2[!(ID2 %in% ID1)]
 ID1[!(ID1 %in% ID2)]
 
 makeWriteShp09 <- function(cbsa){
-  g <- allshp[as.character(allshp@data$cbsa)==cbsa & !is.na(allshp@data$cbsa),]
+  g <- allshp2[as.character(allshp2@data$cbsa)==cbsa & !is.na(allshp2@data$cbsa),]
   writeOGR(g, "/home/alec/Data/tiger-line/cbsa_shps00", cbsa, driver="ESRI Shapefile")
 }
 
