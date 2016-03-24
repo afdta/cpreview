@@ -4,17 +4,37 @@
 
 if(!CP2016.session.svg){return null;} //no-op if svg not supported
 
-var newmap = true;
+var previndicator = null; //keep track of incompatible switches
+var indicator = "pov1014"
+var indicatorPeriod = {pov1014:"2010-14", pov0509:"2005-09", pov00:"2000"}
 
+//user messaging
+var usermessage = {wrap:CP2016.dom.tractmap.messages, timer:null, duration:4500, loading:false, geo:false}
+usermessage.p = usermessage.wrap.append("p").text("Loading neighborhood data...");
+
+
+//return back to map 1
 CP2016.dom.tractmap.back.on("mousedown",function(d,i){
   CP2016.dom.show("map1");
   hidetip();
-  newmap = true;
   CP2016.state.metro = null; //ensure that when the tractmap is redrawn (when this view is returned to), no transitions are used
 });
 
-var indicator = "pov1014"
-var indicatorPeriod = {pov1014:"2010-14", pov0509:"2005-09", pov00:"2000"}
+//when drawing a new map (i.e. coming from view 1) match the time periods, if possible
+var setIndicator = function(){
+  if(CP2016.state.period === "2010_14"){
+    indicator = "pov1014"; 
+  }
+  else if(CP2016.state.period === "2005_09"){
+    indicator = "pov0509";
+  }
+  else if(CP2016.state.period === "2000"){
+    indicator = "pov00";
+  }
+  else{
+    indicator = "pov1014";
+  }
+}
 
 var setTitle = function(){
   var text = "Neighborhood poverty rates in the " + 
@@ -26,15 +46,32 @@ var setTitle = function(){
 }
 
 var currentTracts;
-var curretnGeoJSON;
-var tractOutlines;
+var currentMeshes;
+
 var panning;
 
 var path = d3.geo.path().projection(null);
-var tractDB = {};
+var tractDB = {t2000:{}, t2010:{}};
 
 var getDrawTracts = function(cbsa){
-  var uri = CP2016.session.repo + "geojson/" + cbsa + ".json";
+  
+  //orchestrate the drawing of new metros
+  if(CP2016.state.metro===null){
+    zoomWayOut(); //reset zoom level, scale, and translate
+    setIndicator(); //match tract time period with metro level map time period
+  } 
+
+  sync_pbuttons();
+
+  if(indicator === "pov0509"){
+    var DB = tractDB.t2000;
+  }
+  else{
+    var DB = tractDB.t2010;
+  }
+
+  var uri = CP2016.session.repo + "geojson/" + (indicator==="pov0509" ? "2000/" : "2010/") + cbsa + ".json";
+
   var processDat = function(dat){
 
     //resetFilters();
@@ -43,7 +80,7 @@ var getDrawTracts = function(cbsa){
 
     var meshCity = topojson.mesh(dat,dat.objects.tracts,function(a,b){
 
-      if((a.properties.city || b.properties.city) && a.properties.city !== b.properties.city){
+      if((a.properties.city || b.properties.city) && (a.properties.plfips !== b.properties.plfips)){
         var keep = true; 
       }
       else if(a.properties.city ===1 && a===b){
@@ -54,29 +91,45 @@ var getDrawTracts = function(cbsa){
       }
       return keep;
     });
+    var meshCounty = topojson.mesh(dat,dat.objects.tracts,function(a,b){
+      return a.id.substring(0,5) !== b.id.substring(0,5) || (a===b);
+    });
 
-    //orchestrate the drawing of new metros
-    if(newmap){zoomWayOut();} //reset zoom level, scale, and translate
-    drawSVG(geojson, CP2016.state.metro === cbsa, [meshCity]);
-    CP2016.state.metro = cbsa;
+
+    drawSVG(geojson, CP2016.state.metro === cbsa, [meshCounty, meshCity]);
+    
+    CP2016.state.metro = cbsa; //for "new" maps, the metro property will be null during the execution of drawSVG
     setTitle();
     CP2016.dom.tractmap.svg.style("visibility","visible");
-    newmap = false; //only reset when the user switches from this view
+
   } 
 
-  if(cbsa in tractDB){
-    processDat(tractDB[cbsa]);
+  if(cbsa in DB){
+    processDat(DB[cbsa]);
   }
   else{
+    //display loading message
+    usermessage.wrap.style("display","block");
+    usermessage.p.html("Loading neighborhood data...")
+    usermessage.loading = true
+    
+    //load data
     d3.json(uri, function(error, dat){
       if (error){
         //to do: handle error condition
         return null;
       }
       else{
-        tractDB[cbsa] = dat;
+        DB[cbsa] = dat;
         processDat(dat);
       }
+
+      //hide loading messages
+      usermessage.loading = false;
+      if(!usermessage.geo){
+        usermessage.wrap.style("display","none");
+      }
+
     });
   }
 }
@@ -140,47 +193,70 @@ function hidetip(){
 
 //combine draw functions into one that renders to svg and/or canvas
 function drawSVG(gj, transition, meshes){
-  //reset zoom/translate
 
-  var sel = CP2016.dom.tractmap.tracts.selectAll("path.tract").data(gj.features);
+  if(!!CP2016.state.metro && (indicator==="pov0509" || previndicator==="pov0509")){
+    transition = false; //don't run transitions in this case
+    
+    //display geo inconsistency message
+    usermessage.p.html('<span style="font-weight:bold">Neighborhood boundaries may have changed</span> with your selection.')
+    usermessage.geo = true;
+    usermessage.wrap.style("display","block");
+
+    clearTimeout(usermessage.timer);
+    usermessage.timer = setTimeout(function(){
+      usermessage.geo = false;
+      if(!usermessage.loading){
+        usermessage.wrap.style("display","none");
+      }
+      usermessage.duration = 1500; //subsequent messages will appear for shorter duration
+    }, usermessage.duration);
+
+  }
+
+  if(indicator === "pov0509"){
+    var tracts = CP2016.dom.tractmap.tracts00.style("display","inline");
+    CP2016.dom.tractmap.tracts.style("display","none");
+  }
+  else{
+    var tracts = CP2016.dom.tractmap.tracts.style("display","inline");
+    CP2016.dom.tractmap.tracts00.style("display","none");
+  }
+
+  var sel = tracts.selectAll("path.tract").data(gj.features);
   sel.exit().remove();
   sel.enter().append("path").classed("tract",true).attr({"fill":"#ffffff","stroke":"#ffffff"});
   sel.attr("d",path).attr({"stroke-width":(1/CP2016.dom.tractmap.zoom.scale)})
-      .style("pointer-events","all")
-      .style("visibility","visible");
+      .style("pointer-events","all");
       //.style("cursor","pointer");
   sel.attr("data-tract",function(d,i){
   	return d.id;
   });
+
   sel.on("mouseover",showtip);
   sel.on("mousemove",showtip);
   sel.on("touchstart",showtip);
-  CP2016.dom.tractmap.tracts.on("mouseleave",hidetip);
+  tracts.on("mouseleave",hidetip);
 
   CP2016.dom.tractmap.hovertract
-    .attr({"fill":"none","stroke":"#666666","stroke-width":(3/CP2016.dom.tractmap.zoom.scale)+"px"})
+    .attr({"fill":"rgba(255,255,255,0.9)","stroke":"#ffcf1a","stroke-width":(3/CP2016.dom.tractmap.zoom.scale)+"px"})
     .style("pointer-events","none");
-
-
-  currentTracts = sel;
-  currentGeoJSON = gj;  
+ 
 
   CP2016.dom.tractmap.outlines.selectAll("path.tractMesh").remove();//blank slate insures proper draw order
   var m = CP2016.dom.tractmap.outlines.selectAll("path.tractMesh").data(meshes);
   m.exit().remove();
   m.enter().append("path").classed("tractMesh",true);
-  //var borderColors = ["#555555","#ffcf1a"]; //metro & county, city(ies) "#e8a717"
-  m.attr({"fill":"none"}).attr("stroke-width",(2/CP2016.dom.tractmap.zoom.scale)).attr("d",path)
-   .attr("stroke",function(d,i){
-    return "#333333";
-    //return borderColors[i];
-  }); //.attr("stroke-dasharray","2, 1")
+  m.attr({"fill":"none"}).attr("stroke-width",function(d,i){
+    return ((i+1)/CP2016.dom.tractmap.zoom.scale) + "px";
+  })
+  .attr("d",path)
+  .attr("stroke","#333333");
   
-  //select first (county) path and show or hide
-  //MPAR.svg.tractOutlines.select("path").style("visibility",MPAR.input.countiesShown ? "visible" : "hidden");
-  //m.attr("stroke-dasharray",function(d,i){return i===0 ? "8,3" : "none"})
+  currentTracts = sel;
+  currentMeshes = m;
 
-  shadeTracts(sel, gj, transition);
+
+  shadeTracts(sel, transition);
 };
 
 
@@ -209,34 +285,34 @@ function v2c(v, borderCol){
   }
 }
 
-function shadeTracts(selection,geojson,transition){
+//fill in legend
+var swatches = CP2016.dom.tractmap.legend.selectAll("div.swatch")
+                     .data([[0,"<10%"], 
+                           [0.1, "10% to 20%"], 
+                           [0.2, "20% to 30%"], 
+                           [0.3, "30% to 40%"], 
+                           [0.4, "40%+"]]);
+var swatch_enter = swatches.enter().append("div").classed("c-fix",true);
+  swatch_enter.append("div").style({"float":"left", "width":"25px", "height":"25px"});
+  swatch_enter.append("p").style({"float":"left", "margin-left":"10px"});
+swatches.exit().remove();
 
-  var fmt = function(v){return v}
+swatches.select("div").style("background-color",function(d,i){
+  return v2c(d[0]);
+})
+swatches.select("p").text(function(d,i){return d[1]}).style("line-height","25px");
+
+CP2016.dom.tractmap.legend.append("div").style({"border-top":"2px solid #333333","margin":"20px 0px 0px 0px","padding-top":"5px"})
+  .append("p").text("Primary city/cities");
+
+function shadeTracts(selection, transition){
+
   var MAP = function(d){return d.properties[indicator]}
-  var SUM = 0;
-  var NUM = 0;
 
-  var dat = geojson.features.map(function(d,i,a){
-    var val = MAP(d);
-    if(d.properties.city===1){
-      SUM = SUM + val;
-      NUM++;
-    }
-    return val;
-  })
-
-  var AVG = SUM/NUM;
-
-
-  //labcol will get called with -1, -0.8, -0.6, -0.4, -0.2, 0.2, 0.4, 0.6, 0.8, or 1 -- never 0 (which maps to #ffffff)
-  //values above plarge will be assigned the top category and values below psmall will be assigned the bottom category by qs
   var strokeFN = function(d,i){
     try{
       var v = MAP(d);
       var c = v2c(v,true);
-      /*var s = v < 0 ? -1 : 1;
-      var t = (typeof v === "undefined" || v === null || isNaN(v) || !isFinite(v) ) ? null : qs(Math.abs(v))/ncols;
-      var c = labcol(t*s);*/
     }
     catch(e){
       console.log(e);
@@ -249,9 +325,6 @@ function shadeTracts(selection,geojson,transition){
     try{
       var v = MAP(d);
       var c = v2c(v);
-      /*var s = v < 0 ? -1 : 1;
-      var t = (typeof v === "undefined" || v === null || isNaN(v) || !isFinite(v) ) ? null : qs(Math.abs(v))/ncols;
-      var c = labcol(t*s);*/
     }
     catch(e){
       var c = "#ffffff";
@@ -261,7 +334,7 @@ function shadeTracts(selection,geojson,transition){
 
   if(transition){
      selection
-      .transition().duration(1400)
+      .transition().duration(700)
       .attr("stroke", strokeFN)
       .attr("fill", fillFN); 
   }
@@ -270,86 +343,25 @@ function shadeTracts(selection,geojson,transition){
       .attr("stroke", strokeFN)
       .attr("fill", fillFN);
   }
-
-
-  //MPAR.title.metro.text(MPAR.input.metro);
-  //MPAR.title.indicator.text(MPAR.input.indicator.t);
-  //if(dataTable.loadSummaryTable){dataTable.loadSummaryTable()};
-
-  var ncols = cols.length;
-  var step = 1/ncols;
-  var hstep = step/2; //pick a value in center of range to avoid rounding issues
-  //quantize determines quantile: [min, min+step],(min+step, min+2*step], ... , (min+(n-1)*step, min+n*step] -- note that rounding errors may cause some fuzziness at boundaries using this calc
-  //console.log(scales.quantile30(min + 14*step - 0.0000000001));
-
-  var sliceHeight = 20;
- 
- /* var sliceDat = [];
-
-  for(var i=0;i<ncols;i++){
-    var upper = ((ncols-i)/ncols);
-    var lower = ((ncols-i-1)/ncols);
-    var upperV = upper*max;
-    var lowerV = lower*max;
-    var mid = (upperV+lowerV)/2;
-    var quantile = qs(mid);
-    
-    sliceDat.push({l:fmt(lowerV), h:fmt(upperV), q:quantile, c:labcol(quantile/ncols), y:i*sliceHeight});
-
-    if(actualMin < 0){
-      var y_ = ncols*sliceHeight;
-      sliceDat.push({h:fmt(0-lowerV), l:fmt(0-upperV), q:quantile, c:labcol(0-(quantile/ncols)), y:y_+((ncols-i-1)*sliceHeight)});
-    }
-  }
-
-  sliceDat.sort(function(a,b){return a.y-b.y});*/
-
-  var legend = CP2016.dom.tractmap.legend;
-  var rectG = legend.selectAll("g.legendSlice").data([]);
-  rectG.enter().append("g").classed("legendSlice",true);
-  rectG.exit().remove();
-  rectG.attr("transform",function(d,i){return "translate(20," + (d.y+22) + ")"})
-
-  var lines = rectG.selectAll("path").data(function(d,i){
-    if(i===lcols-1){return [{"x1":0,"x2":33,"y1":sliceHeight-1,"y2":sliceHeight-1},{"x1":0,"x2":33,"y1":0,"y2":0}]}
-    else{return [{"x1":0,"x2":33,"y1":0,"y2":0}]}
-  });
-  lines.enter().append("path");
-  lines.exit().remove();
-  lines.attr("d",function(d,i){return "M0,"+d.y1+" l"+d.x2+",0"}).attr({"fill":"none","stroke":"#d1d1d1"}).style("shape-rendering","crispEdges");
-
-  var rect = rectG.selectAll("rect").data(function(d,i){return [d]});
-  rect.enter().append("rect");
-  rect.exit().remove();
-  rect.attr({"x":0,"y":0,"width":30,"height":sliceHeight}).attr("fill",function(d,i){return d.c});
-
-  var text = rectG.selectAll("text").data(function(d,i){
-    if(i===lcols-1){return [{l:d.h,y:3},{l:d.l,y:sliceHeight+3}]}
-    else{return [{l:d.h,y:3}]}
-  });
-  text.enter().append("text");
-  text.exit().remove();
-  text.attr({"x":38,"y":0}).style({"font-size":"11px"}).text(function(d,i){return d.l}).attr("dy",function(d,i){return d.y});// : (d.q===1 ? d.l : "")}).attr("dy",function(d,i){return d.q===1 ? sliceHeight+4 : 4});
-
-  //primaryCityMarker.attr("transform","translate(20,"+ (sliceDat.length*sliceHeight+50) +")");
-
 };
 
 
-  var pbuttons = CP2016.dom.tractmap.periods.selectAll("div").data([{l:"2000", c:"pov00"}, {l:"2010-14", c:"pov1014"}]);
+  var pbuttons = CP2016.dom.tractmap.periods.selectAll("div").data([{l:"2000", c:"pov00"}, 
+                                                                    {l:"2005-09", c:"pov0509"},
+                                                                    {l:"2010-14", c:"pov1014"}]);
   pbuttons.enter().append("div").append("p").classed("disable-select",true);
   pbuttons.exit().remove();
   pbuttons.select("p").text(function(d,i){return d.l});
 
-  var sync_pbuttons = function(){
+  function sync_pbuttons(){
     pbuttons.classed("button-selected",function(d,i){return d.c===indicator});
   }
-  sync_pbuttons();
 
   pbuttons.on("mousedown",function(d,i){
+    previndicator = indicator;
     indicator = d.c;
-    getDrawTracts(CP2016.state.metro);
     sync_pbuttons();
+    getDrawTracts(CP2016.state.metro);
   });
 
   /*PAN*/
@@ -427,16 +439,19 @@ function shadeTracts(selection,geojson,transition){
     CP2016.dom.tractmap.zoom.translate.x = targetX;
     CP2016.dom.tractmap.zoom.translate.y = targetY;
     
-   CP2016.dom.tractmap.tractwrap.attr("transform","translate("+targetX+","+targetY+") scale("+newZoom+")");
+    CP2016.dom.tractmap.tractwrap.attr("transform","translate("+targetX+","+targetY+") scale("+newZoom+")");
+    
     if(currentTracts){
-      currentTracts.attr("stroke-width",(1*(1/newZoom))+"px");
+      currentTracts.attr("stroke-width",(1/newZoom)+"px");
     }
 
-    CP2016.dom.tractmap.outlines.selectAll("path").attr("stroke-width",function(d,i){return ((i+2)/CP2016.dom.tractmap.zoom.scale)+"px"});
+    if(currentMeshes){
+      currentMeshes.attr("stroke-width",function(d,i){
+        return ((i+1)/CP2016.dom.tractmap.zoom.scale)+"px";
+      });
+    }
 
     CP2016.dom.tractmap.hovertract.attr("stroke-width", (3/newZoom)+"px")
-
-    //MPAR.svg.hoverPath.attr("stroke-width",(1/CP2016.dom.tractmap.zoom.scale)+"px");
   }
 
   function zoomWayOut(){
@@ -464,14 +479,6 @@ function shadeTracts(selection,geojson,transition){
     zoomInOut(true);
   });
   /*END ZOOM IN OUT*/
-
-
-
-
-
-
-
-
 
 
   CP2016.drawTracts = getDrawTracts;

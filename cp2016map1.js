@@ -14,15 +14,35 @@
 	CP2016.pround = pround;
 	CP2016.cpround = cpround;
 
-	var cols = d3.interpolateLab("#ffffbf", "#d7191c");
+	var cols = d3.interpolateLab("#ffffcf", "#d7191c");
 	
-	var cols2r = d3.interpolateLab("#ffffbf", "#d7191c");
-	var cols2b = d3.interpolateLab("#ffffbf", "#2b83ba");
+	var cols2r = d3.interpolateLab("#ffffcf", "#d7191c");
+	var cols2b = d3.interpolateLab("#ffffcf", "#2b83ba");
 
+	var accessor; 
+	var issig;
 	//text accessor will have access to the map object as thisobject -- it depends on the current value of accessor
 	function textAccessor(d){
-		var fmt = CP2016.state.period in {"00to0509":1, "0509to1014":1} ? cpround : pround;
-		return ['<span style="margin-top:10px;font-size:26px">' + fmt(this.getValue(d)) + '</span>'];
+		var fmt = function(v){
+			if(v===null){
+				var f = "N/A";
+			}
+			else{
+				var f = CP2016.state.period in {"00to0509":1, "0509to1014":1} ? cpround(v) : pround(v);
+			}
+			return f;
+		};
+		var sig = issig(d);
+		var asterisk = (sig==="1" || sig==="-1" || sig==="0" ? "*" : "");
+		var sub = "";
+		if(sig==="1" || sig==="-1"){
+			var sub = '<span style="color:#666666;margin-top:15px;">*Statistically significant from zero</span>'
+		}
+		else if(sig==="0"){
+			var sub = '<span style="color:#666666;margin-top:15px;">*Not statistically significant from zero</span>'
+		}
+	
+		return ['<span style="margin-top:10px;font-size:26px">' + fmt(accessor(d)) + asterisk + '</span>', sub];
 	}
 
 	//radius function takes the value
@@ -67,7 +87,7 @@
 	function redrawMap(){
 		var self = this;
 
-		var accessor = function(d){
+		accessor = function(d){
 			var geolevel = CP2016.state.geolevel;
 			var metric = CP2016.state.metric;
 			var race = CP2016.state.race;
@@ -77,6 +97,17 @@
 
 			return +v[metric];
 		};
+
+		issig = function(d){
+			var geolevel = CP2016.state.geolevel;
+			var metric = CP2016.state.metric;
+			var race = CP2016.state.race;
+			var period = CP2016.state.period;
+			
+			var v = d.dat[geolevel][race][period][0]; 
+
+			return v[metric+"sig"];			
+		}
 
 		var accessor2 = function(d){
 			var geolevel = CP2016.state.geolevel;
@@ -141,15 +172,16 @@
 		var gText = {Metro: "", City: ", urban", Suburb:", suburban"};
 		var rText = {All: "", Black:" black", Hispanic:" Hispanic", White:" white"};
 		var mText = {poor20sh:"20%+", poor40sh:"40%+"};
-		var yText = {"2010_14":"2010–14", "2005_09":"2005–09", "2000":"2000", "00to0509":"2000 to 2005–09", "0509to1014":"2005–09 to 2010–14"};
+		var yText = {"2010_14":"Multi-year estimate, 2010–14", "2005_09":"Multi-year estimate, 2005–09", "2000":"2000", "00to0509":"Change, 2000 to 2005–09", "0509to1014":"Change, 2005–09 to 2010–14"};
 
-		var title1 = "Share of the poor" + gText[CP2016.state.geolevel] + rText[CP2016.state.race] + " population living in a neighborhood with a "+ mText[CP2016.state.metric]+" poverty rate, "+yText[CP2016.state.period];
+		var title1 = "Share of the poor" + gText[CP2016.state.geolevel] + rText[CP2016.state.race] + " population living in a neighborhood with a "+ mText[CP2016.state.metric]+" poverty rate";
 		//var title2 =  '<br /><span style="font-size:15px;font-weight:normal;">'+ yText[CP2016.state.period] +'</span>';
+		var title2 = '<br /><span style="font-weight:bold;font-size:15px">'+yText[CP2016.state.period]+'</span><span style="font-size:15px;font-weight:normal;"> | Click on a metro area to view its neighborhood-level map</span>';
 		var title3 = '<br /><span style="font-size:15px;font-weight:normal;">Click on a metro area to view its neighborhood-level map</span>';
 
 		//(CP2016.state.race === "All" ? "" : ("that is "))
 		var titleStyle = {"margin":"0px 45px 0px 10px", "font-weight":"bold", "font-size":"17px"};
-		this.title(title1 + title3, titleStyle);
+		this.title(title1 + title2, titleStyle);
 		CP2016.dom.table.title.html(title1 + title3).style({"font-weight":"bold","font-size":"17px", "margin":"0px 45px 10px 0px"});
 		//self.select(CP2016.state.metro); //re-run select to resize select dot
 	}
@@ -208,13 +240,8 @@
 			}
 		}
 
-		console.log(d);
-
 		dmap = new dotMap(CP2016.dom.dotmap.mapwrap.node());
 		dmap.setData(data,"geo").makeResponsive().draw(redrawMap).showToolTips(textAccessor);
-
-		//dmap.lookup is generated during setData -- expose this in the global state so it can be used in the tractmap
-		//CP2016.state.lookup = dmap.lookup;
 		
 		//fill out the menu
 		var menu = CP2016.dom.menu.content;

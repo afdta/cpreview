@@ -71,12 +71,15 @@
 	CP2016.dom.tractmap.svg = CP2016.dom.tractmap.wrap.append("svg").style({"cursor":"move","width":"100%","height":"100%","visibility":"hidden"});
 	CP2016.dom.tractmap.tractwrap = CP2016.dom.tractmap.svg.append("g");
 	CP2016.dom.tractmap.tracts = CP2016.dom.tractmap.tractwrap.append("g");
+	CP2016.dom.tractmap.tracts00 = CP2016.dom.tractmap.tractwrap.append("g"); //hold 05-09 data in separate layer
 	CP2016.dom.tractmap.outlines = CP2016.dom.tractmap.tractwrap.append("g");
 	CP2016.dom.tractmap.hovertract = CP2016.dom.tractmap.tractwrap.append("g").append("path");
-	CP2016.dom.tractmap.legend = CP2016.dom.tractmap.wrap.append("svg").attr("id","tractmap-legend");
+	CP2016.dom.tractmap.legend = d3.select("#cp2016-tractmap-legend");
 	CP2016.dom.tractmap.back = d3.select("#cp2016-tract-map-back");
 	CP2016.dom.tractmap.periods = d3.select("#cp2016-tract-map-buttons").classed("horizontal-buttons c-fix",true);
 	CP2016.dom.tractmap.tip = CP2016.dom.tractmap.wrap.append("div").classed("cp2016-tooltip",true);
+	
+	CP2016.dom.tractmap.messages = d3.select("#cp2016-tractmap-message");
 
 	CP2016.dom.tractmap.zoom = {};
 	CP2016.dom.tractmap.zoom.in = d3.select("#zoomCtrlIn");
