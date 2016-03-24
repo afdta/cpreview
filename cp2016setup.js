@@ -68,7 +68,7 @@
 								 	.style({"height":CP2016.dom.tractmap.HEIGHT+"px", "width":CP2016.dom.tractmap.WIDTH+"px"});
 	// = CP2016.dom.tractmap.wrap.append("div").classed("horizontal-buttons c-fix",true);
 	CP2016.dom.tractmap.title = d3.select("#cp2016-tractmap-title").append("p")
-	CP2016.dom.tractmap.svg = CP2016.dom.tractmap.wrap.append("svg").style({"cursor":"move","width":"100%","height":"100%","visibility":"hidden"});
+	CP2016.dom.tractmap.svg = CP2016.dom.tractmap.wrap.append("svg").style({"cursor":"default","width":"100%","height":"100%","visibility":"hidden"});
 	CP2016.dom.tractmap.tractwrap = CP2016.dom.tractmap.svg.append("g");
 	CP2016.dom.tractmap.tracts = CP2016.dom.tractmap.tractwrap.append("g");
 	CP2016.dom.tractmap.tracts00 = CP2016.dom.tractmap.tractwrap.append("g"); //hold 05-09 data in separate layer

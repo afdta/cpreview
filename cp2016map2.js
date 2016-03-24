@@ -166,7 +166,7 @@ function showtip(td,i){
   var tipheight = Math.round(tipbox.bottom - tipbox.top);
 
   try{  
-    var x = 950 - coord[0] > (tipwidth+10) ? coord[0] + 10 : coord[0] - tipwidth - 10;
+    var x = 950 - coord[0] > (tipwidth+20) ? coord[0] + 20 : coord[0] - tipwidth - 20;
     var y = 700 - coord[1] > (tipheight-25) ? coord[1] - 25 : 700 - tipheight;
   }
   catch(e){
@@ -198,7 +198,7 @@ function drawSVG(gj, transition, meshes){
     transition = false; //don't run transitions in this case
     
     //display geo inconsistency message
-    usermessage.p.html('<span style="font-weight:bold">Neighborhood boundaries may have changed</span> with your selection.')
+    usermessage.p.html('Some neighborhood boundaries have changed with your selection.')
     usermessage.geo = true;
     usermessage.wrap.style("display","block");
 
@@ -238,7 +238,7 @@ function drawSVG(gj, transition, meshes){
   tracts.on("mouseleave",hidetip);
 
   CP2016.dom.tractmap.hovertract
-    .attr({"fill":"rgba(255,255,255,0.9)","stroke":"#ffcf1a","stroke-width":(3/CP2016.dom.tractmap.zoom.scale)+"px"})
+    .attr({"fill":"rgba(255,255,255,1)","stroke":"#ffcf1a","stroke-width":(3/CP2016.dom.tractmap.zoom.scale)+"px"})
     .style("pointer-events","none");
  
 
@@ -293,7 +293,7 @@ var swatches = CP2016.dom.tractmap.legend.selectAll("div.swatch")
                            [0.3, "30% to 40%"], 
                            [0.4, "40%+"]]);
 var swatch_enter = swatches.enter().append("div").classed("c-fix",true);
-  swatch_enter.append("div").style({"float":"left", "width":"25px", "height":"25px"});
+  swatch_enter.append("div").style({"float":"left", "width":"25px", "height":"25px", "border":"1px solid #ffffff"});
   swatch_enter.append("p").style({"float":"left", "margin-left":"10px"});
 swatches.exit().remove();
 
@@ -302,8 +302,14 @@ swatches.select("div").style("background-color",function(d,i){
 })
 swatches.select("p").text(function(d,i){return d[1]}).style("line-height","25px");
 
-CP2016.dom.tractmap.legend.append("div").style({"border-top":"2px solid #333333","margin":"20px 0px 0px 0px","padding-top":"5px"})
+var nodata = CP2016.dom.tractmap.legend.append("div").classed("c-fix",true).style("margin-top","10px");
+nodata.append("div").style({"float":"left", "width":"23px", "height":"23px","border":"1px solid #333333", "margin-left":"1px"});
+nodata.append("p").style({"float":"left", "margin-left":"10px", "line-height":"23px"}).text("No data");
+
+CP2016.dom.tractmap.legend.append("div").style({"border-top":"2px solid #333333","margin":"15px 0px 0px 0px","padding-top":"5px"})
   .append("p").text("Primary city/cities");
+
+//end legend creation
 
 function shadeTracts(selection, transition){
 
