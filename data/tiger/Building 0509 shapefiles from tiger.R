@@ -49,43 +49,59 @@ rm(f,dir)
 
 shapes <- do.call("rbind",shps)
 
+esri <- readOGR("/home/alec/Data/concentrated-poverty-shapes/2009 tract shapefile/","tracts")
+
 #check
 sum(shapes$CTIDFP00 == paste0(shapes$STATEFP00,shapes$COUNTYFP00,shapes$TRACTCE00)) == length(shapes)
 
-#create a clean spatial polygons object
-Sr <- SpatialPolygons(shapes@polygons, proj4string=shapes@proj4string)
-
 #import data
-tractDTA <- read.csv("/home/alec/Projects/Brookings/concentrated-poverty/data/source/2005-09 tracts for interactive.csv",
+tractDTA <- read.csv("/home/alec/Projects/Brookings/concentrated-poverty/data/source/2005-09 tracts for interactive RECODE.csv",
                      colClasses=c(tract="character", cbsa="character"),
-                     stringsAsFactors=FALSE)
+                     stringsAsFactors=FALSE, na.strings=c("","NA","#N/A"))
 
-newnames <- c("tract", "exclude", "supp", "cbsa", "metro", "city", "poor00", "pov00", "poor1014", "pov1014", "chpoor", "chpoorS", "chpov", "chpovS")
-names(tractDTA) <- newnames
-
-rownames(tractDTA) <- tractDTA$tract
-
-allshp <- SpatialPolygonsDataFrame(Sr, tractDTA, match.ID = TRUE)
-length(allshp)
-
-#basic check
-ID1 <- sapply(Sr@polygons,function(e){return(e@ID)})
-ID2 <- rownames(tractDTA)
-ID2[!(ID2 %in% ID1)]
-ID1[!(ID1 %in% ID2)]
-
-cbsas <- unique(allshp@data[c("cbsa","metro")])
+#create a top 100 metro list
+cbsas <- unique(tractDTA[c("cbsa","metro")])
 t100 <- metropops(TRUE, "2013")
 cbsa100 <- merge(cbsas, t100[c("CBSA_Code","CBSA_Title")], by.x="cbsa", by.y="CBSA_Code")
 sum(cbsa100$metro == cbsa100$CBSA_Title)
 
-makeWriteShp <- function(cbsa){
+tractMetro <- tractDTA[tractDTA$cbsa %in% cbsa100$cbsa, ]
+
+newnames <- c("tract", "exclude", "supp", "cbsa", "metro", "city", "plfips", "place", "poor0509", "pov0509", "tractR", "poorR", "povR", "note")
+names(tractMetro) <- newnames
+
+inshp <- which(tractMetro$tract %in% shapes@data$CTIDFP00) #obs from data that are in shapefile
+indat <- which(shapes@data$CTIDFP00 %in% tractMetro$tract) #obs from shapefile that are in data
+
+ninshape <- tractMetro[!(tractMetro$tract %in% shapes@data$CTIDFP00), ] #there are still missing items
+#ninesri <- tractMetro[!(tractMetro$tract %in% esri@data$FIPS), ]
+
+#recode <- tractDTA[tractDTA$tract_recode != "#N/A",]
+
+#create a clean spatial polygons object
+shapes_sub <- shapes[indat,]
+dat_sub <- tractMetro[inshp,c("tract","exclude","cbsa","city","plfips","pov0509")]
+
+Sr <- SpatialPolygons(shapes_sub@polygons, proj4string=shapes_sub@proj4string)
+
+rownames(dat_sub) <- dat_sub$tract
+
+allshp <- SpatialPolygonsDataFrame(Sr, dat_sub, match.ID = TRUE)
+length(allshp)
+
+#basic check
+ID1 <- sapply(Sr@polygons,function(e){return(e@ID)})
+ID2 <- rownames(dat_sub)
+ID2[!(ID2 %in% ID1)]
+ID1[!(ID1 %in% ID2)]
+
+makeWriteShp09 <- function(cbsa){
   g <- allshp[as.character(allshp@data$cbsa)==cbsa & !is.na(allshp@data$cbsa),]
-  writeOGR(g, "cbsa_shps", cbsa, driver="ESRI Shapefile")
+  writeOGR(g, "/home/alec/Data/tiger-line/cbsa_shps00", cbsa, driver="ESRI Shapefile")
 }
 
 for(c in cbsa100$cbsa){
-  makeWriteShp(c)
+  makeWriteShp09(c)
 }
 
 #generate string for shell script

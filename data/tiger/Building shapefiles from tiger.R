@@ -62,12 +62,12 @@ tractDTA <- read.csv("/home/alec/Projects/Brookings/concentrated-poverty/data/so
                      colClasses=c(tract="character", cbsa="character"),
                      stringsAsFactors=FALSE)
 
-newnames <- c("tract", "exclude", "supp", "cbsa", "metro", "city", "poor00", "pov00", "poor1014", "pov1014", "chpoor", "chpoorS", "chpov", "chpovS")
+newnames <- c("tract", "exclude", "supp", "cbsa", "metro", "city", "plfips", "place", "poor00", "pov00", "poor1014", "pov1014", "chpoor", "chpoorS", "chpov", "chpovS")
 names(tractDTA) <- newnames
 
 rownames(tractDTA) <- tractDTA$tract
 
-allshp <- SpatialPolygonsDataFrame(Sr, tractDTA, match.ID = TRUE)
+allshp <- SpatialPolygonsDataFrame(Sr, tractDTA[c("tract","exclude","supp","cbsa","city","plfips","pov00","pov1014")], match.ID = TRUE)
 length(allshp)
 
 #basic check
@@ -76,14 +76,13 @@ ID2 <- rownames(tractDTA)
 ID2[!(ID2 %in% ID1)]
 ID1[!(ID1 %in% ID2)]
 
-cbsas <- unique(allshp@data[c("cbsa","metro")])
+cbsas <- unique(allshp@data[c("cbsa")])
 t100 <- metropops(TRUE, "2013")
 cbsa100 <- merge(cbsas, t100[c("CBSA_Code","CBSA_Title")], by.x="cbsa", by.y="CBSA_Code")
-sum(cbsa100$metro == cbsa100$CBSA_Title)
 
 makeWriteShp <- function(cbsa){
   g <- allshp[as.character(allshp@data$cbsa)==cbsa & !is.na(allshp@data$cbsa),]
-  writeOGR(g, "cbsa_shps", cbsa, driver="ESRI Shapefile")
+  writeOGR(g, "/home/alec/Data/tiger-line/cbsa_shps10", cbsa, driver="ESRI Shapefile")
 }
 
 for(c in cbsa100$cbsa){
